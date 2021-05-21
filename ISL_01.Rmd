@@ -233,7 +233,7 @@ knitr::include_graphics("imagens/our_mission.gif")
 
 ## Aprendizado supervisionado
 
-### Nossa missão:
+### `r emo::ji("developer")` `r emo::ji("developer")` `r emo::ji("developer")`  Nossa missão:
 
 - Utilizar modelos/algoritmos para estimar $f(\cdot)$, ou seja, obter $\hat{f}(\cdot)$ tal que $$\hat{Y} := \hat{f}(X) \approx Y$$
 
@@ -451,14 +451,14 @@ ggplot(mini_iris) + geom_point(aes(Sepal.Length, Sepal.Width, color = Species))
 
 --
 
-O algoritmo chamado **KNN** (k-vizinhos mais próximos) que opera com essa mesma lógica! `r emo::ji("purple_heart")`.
+O algoritmo chamado **KNN** (k-vizinhos mais próximos) que opera com essa mesma lógica! `r emo::ji("cool")`.
 
 ---
 
 ## Um modelo intuitivo: KNN
 
 
-```{r}
+```{r, eval = FALSE}
 # Carregando os pacotes necessários
 library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
@@ -479,6 +479,49 @@ yhat <- predict(modelo_fit, new_data = mini_iris)
 table(mini_iris$Species,yhat$.pred_class)
 ```
 
+---
+
+## Um modelo intuitivo: KNN
+
+```{r}
+
+```{r, echo = FALSE}
+# Carregando os pacotes necessários
+library(tidymodels)     # cria um ecoosistema padrão para a modelagem
+library(kknn)           # Implementação do KNN
+
+# Importando dataset: mini_iris
+mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+
+# Especificamos o modelo
+modelo_spec <- nearest_neighbor() %>% set_engine("kknn") %>%  set_mode("classification") 
+
+# Ajustamos o modelo (fit)
+modelo_fit <- modelo_spec %>% fit(Species ~ Sepal.Length + Sepal.Width, data = mini_iris)
+
+# Valores ajustado (predict)
+yhat <- predict(modelo_fit, new_data = mini_iris)
+
+# Avaliando o Modelo
+table(mini_iris$Species,yhat$.pred_class)
+```
+
+.pull-left[
+![surp](https://media3.giphy.com/media/5VKbvrjxpVJCM/giphy-downsized.gif) 
+]
+
+--
+
+.pull-right[
+*   Mas isso será que é bomo sufuciente? 
+*   será que o modelo aprendeu ou apenas memorizou? 
+*     e quantos vizinhos utilizamos? 
+*   como funciona o método?
+
+
+####   .red[**Isso todo veremos na próxima reunião! **]
+
+]
 
 
 ---
