@@ -11,7 +11,7 @@
     <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
     <link href="libs/panelset/panelset.css" rel="stylesheet" />
     <script src="libs/panelset/panelset.js"></script>
-    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"x29cfcb97e0549b3834838daaed6e450","expires":14}</script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"fe13330aa30244668946ca25164b8997","expires":14}</script>
     <script src="libs/himalaya/himalaya.js"></script>
     <script src="libs/js-cookie/js.cookie.js"></script>
     <link href="libs/editable/editable.css" rel="stylesheet" />
@@ -22,6 +22,10 @@
     <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
     <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
     <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/peerjs/peerjs.min.js"></script>
+    <script src="libs/tiny.toast/toast.min.js"></script>
+    <link href="libs/xaringanExtra-broadcast/broadcast.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-broadcast/broadcast.js"></script>
     <script src="libs/fabric/fabric.min.js"></script>
     <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
     <script src="libs/xaringanExtra-scribble/scribble.js"></script>
@@ -238,7 +242,7 @@ class: inverse, center, middle
 
 ## Aprendizado supervisionado
 
-### 👨‍💻 👩‍💻 👩‍💻  Nossa missão:
+### 👩‍💻 👨‍💻 👨‍💻  Nossa missão:
 
 - Utilizar modelos/algoritmos para estimar `\(f(\cdot)\)`, ou seja, obter `\(\hat{f}(\cdot)\)` tal que `$$\hat{Y} := \hat{f}(X) \approx Y$$`
 
@@ -465,7 +469,8 @@ library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
 
 # Importando dataset: mini_iris
-mini_iris &lt;- read.csv("./datasets/mini_iris.csv", sep = ";") %&gt;% mutate_if(is.character,as.factor)  
+mini_iris &lt;- read.csv("./datasets/mini_iris.csv", sep = ";") %&gt;% 
+  mutate_if(is.character,as.factor)  
 
 # Especificamos o modelo
 modelo_spec &lt;- nearest_neighbor() %&gt;% set_engine("kknn") %&gt;%  set_mode("classification") 

@@ -35,7 +35,7 @@ knitr::opts_chunk$set(
 
 
 ```{r xaringanExtra, echo=FALSE}
-xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard", "broadcast"))
 ```
 
 
@@ -464,7 +464,8 @@ library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
 
 # Importando dataset: mini_iris
-mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% 
+  mutate_if(is.character,as.factor)  
 
 # Especificamos o modelo
 modelo_spec <- nearest_neighbor() %>% set_engine("kknn") %>%  set_mode("classification") 
