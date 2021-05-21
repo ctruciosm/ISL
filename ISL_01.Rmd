@@ -513,10 +513,11 @@ table(mini_iris$Species,yhat$.pred_class)
 --
 
 .pull-right[
-*   Mas isso será que é bomo sufuciente? 
-*   será que o modelo aprendeu ou apenas memorizou? 
-*     e quantos vizinhos utilizamos? 
-*   como funciona o método?
+*   Mas será que isso é bom o sufuciente? 
+*   Será que o modelo aprendeu ou apenas memorizou? 
+*   Quantos vizinhos utilizamos? 
+*   e...e....e....
+*   Como funciona o método?
 
 
 ####   .red[**Isso todo veremos na próxima reunião! **]
