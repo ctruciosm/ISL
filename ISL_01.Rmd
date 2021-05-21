@@ -1,0 +1,515 @@
+---
+title: "Statistical Learning:"
+subtitle: "Introdução"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+```
+
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+class: inverse, center, middle
+# Conceitos básicos
+---
+
+
+## _Statistical Learning_: Aprendizado Estatístico
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+_Statistical Learning_ refere-se a um vasto conjunto de ferramentas para entender os dados 
+.tr[
+— Gareth James, Daniela Witten, Trevor Hastie e Robert Tibshirani (2013) 
+]]
+
+
+--
+
+### _Cases_:
+
+- Segmentar de clientes
+- Identificar fatores de risco para o cancer de prostata
+- Identificar fatores que aumentam a probabilide de _churn_
+- Crear uma ferramenta que nos ajude a classificar os emails com spam e não spam
+- Classificar um potêncial cliente como bom pagador/ruim pagador
+- Precificação
+- Criação de indicadores
+- Identificar se um novo funcionários ficará muito tempo na empresa
+- etc
+
+
+---
+
+## _Statistical Learning_: Aprendizado Estatístico
+
+
+As ferramentas que utilizamos para entender os dados podem ser:
+
+- Modelos (**Data Modeling Culture**) 
+- Algoritmos (**Algorithmic Modeling Culture**).
+
+--
+
+
+Esse modelos e algoritmos podem ser classificados, _principalmente_, em:
+
+- Métodos de aprendizado supervisionado.
+- Métodos de aprendizado não supervisionado.
+- .blue[Existem outras categorias mas não veremos elas por enquanto.]
+
+
+--
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+Breiman, L. (2001). Statistical modeling: The two cultures (with comments and a rejoinder by the author). Statistical Science, 16(3), 199-231.
+]
+
+
+
+---
+
+## Aprendizado supervisionado vs. não supervisionado
+
+
+.pull-left[
+#### Aprendizado supervisionado:
+
+*   Temos uma variável de interesse $Y$ que queremos entender/fazer predições
+*   Temos um conjunto de $p$ variáveis $X = (X_1, \ldots, X_p)$
+*   O modelo/algoritmo vai aprender qual a relação entre $X$ e $Y$ de forma que conhecendo $X$ "saibamos" $Y$
+*   Utilizamos aprendizado supervisionado para:
+  - classificação
+  - regressão
+  
+.center[  
+```{r, echo=FALSE, out.width = '30%'}
+knitr::include_graphics("imagens/engrenagem.png")
+```
+]
+]
+
+--
+
+.pull-right[
+
+#### Aprendizado não supervisionado:
+
+*   Não temos $Y$
+*   Temos apenas um conjunto de $p$ variáveis $X = (X_1, \ldots, X_p)$
+*   O modelo/algoritmo vai descobrir padrões em $X$
+*   Utilizamos aprendizado não supervisionado para:
+  - clustering, 
+  - regras de associação, 
+  - redução de dimensão.
+  
+  
+.center[  
+```{r, echo=FALSE, out.width = '30%'}
+knitr::include_graphics("imagens/engrenagem.png")
+```
+]
+]
+
+
+---
+
+
+## _Statistical Learning_ Workflow
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+Independente se usarmos .red[modelos ou algoritmos], se estamos ante um caso de aprendizado .red[supervisionado ou não supervisionado], se temos muitos ou poucos dados... o processo de modelagem precisa seguir um fluxo de trabalho bem definido.
+]
+
+--
+
+#### Passos para implementar um projeto de _Machine Learning_
+
+.pull-left[
+### CRISP-DM
+
+*   Entender o problema
+*   Entender os dados
+*   Preparar os dados (_Data wrangling_)
+*   Modelagem
+*   Avaliação de modelos
+*   Comunicar os resultados/modelo em produção
+
+
+]
+
+
+--
+
+.pull-right[
+
+.center[
+```{r , fig.cap="CRISP-DM Process. Source: Wikipedia", echo=FALSE, out.width = '50%'}
+knitr::include_graphics("imagens/CRISP-DM_Process.png")
+```
+]
+
+]
+
+
+
+---
+class: inverse, center, middle
+# Aprendizado supervisionado
+---
+
+
+
+## Aprendizado supervisionado
+
+$$Y = f(X) + e$$
+
+
+--
+
+- $Y$: variável dependente/target;
+- $X$: conjunto de variáveis explicativas/independentes/features;
+- $e$: termo aleatório;
+- $f(\cdot)$: função que relaciona $X$ com $Y$.
+
+--
+
+| Y | X  |
+|:-------:|:--------:|
+| variável dependente  |  variável independente |
+| variável explicada   |  variável explicativa |
+| variável resposta    |  variável de controle |
+| variável prevista    |  variável previsora   |
+| regressando          | regressor |
+| variável *target*    | covariável |
+|                      | _feature_ |
+
+
+
+
+---
+
+```{r , echo=FALSE, out.width = '50%'}
+knitr::include_graphics("imagens/our_mission.gif")
+```
+
+---
+
+## Aprendizado supervisionado
+
+### Nossa missão:
+
+- Utilizar modelos/algoritmos para estimar $f(\cdot)$, ou seja, obter $\hat{f}(\cdot)$ tal que $$\hat{Y} := \hat{f}(X) \approx Y$$
+
+--
+
+- Conhecendo $\hat{f}(\cdot)$ faremos:
+  * Predição (foco do livro ISRL)
+  * Inferência (ACA228 é um bom ponto de início)
+  
+  
+--
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+_Statistical Learning_ refere-se a um conjunto de abordagens para estimar $f(\cdot)$
+.tr[
+— Gareth James, Daniela Witten, Trevor Hastie e Robert Tibshirani (2013) 
+]]
+
+---
+
+## Modelos ou algoritmos?
+
+Para estimar $f(\cdot)$ podemos utilizar .blue[modelos] (ISRL chamá de _métodos paramétricos_) ou .blue[algoritmos] (ISRL chama de _métodos não paramétricos_)
+
+--
+
+.pull-left[
+#### Modelos | Métodos Paramétricos
+
+- Fazemos uma suposição sobre a forma funcional do modelo, por exemplo $Y = \beta_0 + \beta_1 X_1 + \ldots, \beta_p X_p + e$
+- Uma vez escolhido o modelo, precisamos um procedimento para estimar os parâmetros do modelo ($\hat{\beta}_1, \ldots, \hat{\beta}_p$).
+- Esta abordagem simplifica o problema (é muito mais facil estimar os parâmetros do modelo do que a função toda $f(\cdot)$)
+- .red[Desvatagem:] Quando o modelo escolhido está longe do modelo real $f(\cdot)$ os resultados não são muito bons.
+
+
+]
+
+--
+
+.pull-right[
+
+#### Algoritmos | Métodos **não** Paramétricos
+
+- Não faz suposições sobre a forma funcional de $f(\cdot)$
+- São mais flexíveis (podem capturar diferentes formas funcionais de $f(\cdot)$).
+- .red[Desvatagem:] Estimar $f(\cdot)$ requer muitas mais observações do que _apenas_ estimar os parâmetros
+- .red[Desvatagem:] Muitas vezes perdemos interpretação.
+- .red[Desvatagem:] Inferência estatística???
+
+]
+
+
+---
+
+## Modelos ou algoritmos?
+
+Por que precisamos de modelos, se são menos flexíveis, se temos algoritmos?
+
+- Podemos estar interessados em inferência (quais variáveis explicativas estão associadas com $Y$, qual é a relação entre $Y$ e as variáveis explicativas).
+
+--
+
+
+- Muitas flexibilidade pode nos levar a um problema conhecido como _overfitting_ (bom desempenho dentro da amostra, ruim desempenho fora da amostra)
+
+--
+
+
+> .red[**No jargão do dia a dia, chamamos modelos ou algoritmos de forma indistinta.** ]
+
+--
+
+> .blue[**Sejam modelos ou algoritmos, o importante é saber se eles performam bem!**]
+
+--
+
+> .green[**Daqui em diante utilizaremos o termo _modelo_ para nos referir tanto a modelos quanto algoritmos.**]
+
+---
+class: inverse, center, middle
+# Como saber se nosso modelo é bom?
+---
+
+## Avaliação de Modelos
+
+Quando utilizamos um modelo para uma tarefa específica, queremos saber quão bem/ruim a tarefa foi realizada. Existem várias métricas para mensurar a qualidade do modelo. Por enquanto focaremos apenas em 2:
+
+--
+
+.pull-left[
+### Regressão
+
+Mean Squared Error:
+
+$$MSE = \dfrac{1}{n} \displaystyle \sum_{i=1}^n (y_i - \hat{y}_i)^2$$
+
+]
+
+--
+
+.pull-right[
+### Clasificação
+
+Error Rate:
+
+$$ER = \dfrac{1}{n} \displaystyle \sum_{i=1}^n I(y_i \neq \hat{y}_i)$$
+
+]
+
+
+
+---
+
+## Avaliação de Modelos: Aprender ou Memorizar?
+
+
+- É possivel 'memorizar' o comportamento do nosso _dataset_ de forma que para cada valor de $X$ saibamos exatamente o valor de $Y$.
+
+--
+
+- .blue[Mas qual é a desvantagem de memorizar?] Quando temos algum um pouco diferente daquilo que foi memorizado não sabemos o que fazer.
+
+--
+
+- .red[Quando construimos um modelo não queremos memorizar mas aprender dos dados] assim encontraremos regras/padrões que nos ajudarão a saber o que fazer quando enfrentemos situações um pouco diferentes.
+
+--
+
+### Como saber de nosso modelo memorizou ou aprendeu?
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+Para evitar que o modelo apenas memorize (ou saber se o modelo apenas memorizou) precisamos testar o aprendido em um novo _dataset_ para saber qual foi a performance do modelo. 
+]
+
+
+---
+
+## Avaliação de Modelos: Aprender ou Memorizar?
+
+- Para avaliar se nosso modelo aprendeu de fato e não apenas memorizou, precisamos testar o aprendido em um novo _dataset_.
+- Na prática temos apenas um único _dataset_
+
+--
+
+### Então, como avaliamos se nosso modelo aprendeu ou apenas memorizou?
+
+--
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+
+- Dividimos nosso _dataset_ em duas partes: dados para treinamento (**train**) e dados para teste (**test**)
+- Utilizamos os dados de treinamento para que nosso modelo `aprenda` dos dados.
+- Se nosso modelo aprendeu e não apenas memorizou, quando aplicarmos o aprendido em um novo conjunto de dados (**test**) nosso modelo terá um desempenho _bom desempenho_. 
+- Para avaliar o desempenho utilizaremos o $MSE$, $ER$, etc. (dependendo do problema que estivermos trabalhando)
+]
+
+
+
+---
+class: inverse, center, middle
+# Machine Learning ou Statistical Learning?
+---
+
+
+## Machine Learning ou Statistical Learning?
+
+
+
+.pull-left[
+### Machine Learning
+
+- Algorithmic Modeling Culture
+- Objetivo principal: Predição
+- Modelos _BlackBox_
+
+]
+
+--
+
+.pull-right[
+### Statistical Learning
+
+- Data Modeling Culture
+- Objetivo principal: Inferência
+- Modelos interpretáveis
+
+]
+
+--
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+*   Embora existam algumas diferenças, hoje em dia os termos são utilizados indistintamente para se referir ao conjunto de ferramentas para entender os dados/estimar $f(\cdot)$.
+*   Nós não faremos distinção entre ambos os termos e os utilizaremos indistintamente.
+*   Focaremos primeiro em predição $\hat{Y}$ (foco do livro ISLR) e deixaremos a parte de inferência para o futuro (ACA228 é um bom ponto de início).
+]
+
+
+
+---
+class: inverse, center, middle
+# Um modelo intuitivo
+---
+
+## Um modelo intuitivo
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+ggplot(mini_iris) + geom_point(aes(Sepal.Length, Sepal.Width, color = Species))
+```
+
+
+--
+
+O algoritmo chamado **KNN** (k-vizinhos mais próximos) que opera com essa mesma lógica! `r emo::ji("purple_heart")`.
+
+---
+
+## Um modelo intuitivo: KNN
+
+
+```{r}
+# Carregando os pacotes necessários
+library(tidymodels)     # cria um ecoosistema padrão para a modelagem
+library(kknn)           # Implementação do KNN
+
+# Importando dataset: mini_iris
+mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+
+# Especificamos o modelo
+modelo_spec <- nearest_neighbor() %>% set_engine("kknn") %>%  set_mode("classification") 
+
+# Ajustamos o modelo (fit)
+modelo_fit <- modelo_spec %>% fit(Species ~ Sepal.Length + Sepal.Width, data = mini_iris)
+
+# Valores ajustado (predict)
+yhat <- predict(modelo_fit, new_data = mini_iris)
+
+# Avaliando o Modelo
+table(mini_iris$Species,yhat$.pred_class)
+```
+
+
+
+---
+
+
+                  
+## Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+.pull-right[
+
+### Crie um conta no [Github](https://github.com)
+
+### No linkedin siga [R posts you might have missed!](https://www.linkedin.com/company/r-icymi/)
+
+### Se gostar de Phyton, siga [Python posts you might have missed!](https://www.linkedin.com/company/icymi-py/)
+
+###  .blue["mas ponham à prova todas as coisas e fiquem com o que é bom." (1 Tessalonicenses 5:21)]
+
+]
+
+
+---
+
+## Referências:
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com)
+- [Chatzidimitriou, K., Diamantopoulos, T., Papamichail, M., and Symeonidis, A. (2018). Practical Machine Learning in R. Leanpub.](https://leanpub.com/practical-machine-learning-r) 
+- [Breiman, L. (2001). Statistical modeling: The two cultures (with comments and a rejoinder by the author). Statistical science, 16(3), 199-231.](https://projecteuclid.org/journals/statistical-science/volume-16/issue-3/Statistical-Modeling--The-Two-Cultures-with-comments-and-a/10.1214/ss/1009213726.full)
+
+

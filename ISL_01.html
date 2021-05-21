@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-05-21" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"x8d3692e87464cb6a5608702729e9a7e","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Statistical Learning:
+## Introdução
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-05-21
+
+---
+
+
+
+
+
+
+
+
+
+
+
+class: inverse, center, middle
+# Conceitos básicos
+---
+
+
+## _Statistical Learning_: Aprendizado Estatístico
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+_Statistical Learning_ refere-se a um vasto conjunto de ferramentas para entender os dados 
+.tr[
+— Gareth James, Daniela Witten, Trevor Hastie e Robert Tibshirani (2013) 
+]]
+
+
+--
+
+### _Cases_:
+
+- Segmentar de clientes
+- Identificar fatores de risco para o cancer de prostata
+- Identificar fatores que aumentam a probabilide de _churn_
+- Crear uma ferramenta que nos ajude a classificar os emails com spam e não spam
+- Classificar um potêncial cliente como bom pagador/ruim pagador
+- Precificação
+- Criação de indicadores
+- Identificar se um novo funcionários ficará muito tempo na empresa
+- etc
+
+
+---
+
+## _Statistical Learning_: Aprendizado Estatístico
+
+
+As ferramentas que utilizamos para entender os dados podem ser:
+
+- Modelos (**Data Modeling Culture**) 
+- Algoritmos (**Algorithmic Modeling Culture**).
+
+--
+
+
+Esse modelos e algoritmos podem ser classificados, _principalmente_, em:
+
+- Métodos de aprendizado supervisionado.
+- Métodos de aprendizado não supervisionado.
+- .blue[Existem outras categorias mas não veremos elas por enquanto.]
+
+
+--
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+Breiman, L. (2001). Statistical modeling: The two cultures (with comments and a rejoinder by the author). Statistical Science, 16(3), 199-231.
+]
+
+
+
+---
+
+## Aprendizado supervisionado vs. não supervisionado
+
+
+.pull-left[
+#### Aprendizado supervisionado:
+
+*   Temos uma variável de interesse `\(Y\)` que queremos entender/fazer predições
+*   Temos um conjunto de `\(p\)` variáveis `\(X = (X_1, \ldots, X_p)\)`
+*   O modelo/algoritmo vai aprender qual a relação entre `\(X\)` e `\(Y\)` de forma que conhecendo `\(X\)` "saibamos" `\(Y\)`
+*   Utilizamos aprendizado supervisionado para:
+  - classificação
+  - regressão
+  
+.center[  
+&lt;img src="imagens/engrenagem.png" width="30%" /&gt;
+]
+]
+
+--
+
+.pull-right[
+
+#### Aprendizado não supervisionado:
+
+*   Não temos `\(Y\)`
+*   Temos apenas um conjunto de `\(p\)` variáveis `\(X = (X_1, \ldots, X_p)\)`
+*   O modelo/algoritmo vai descobrir padrões em `\(X\)`
+*   Utilizamos aprendizado não supervisionado para:
+  - clustering, 
+  - regras de associação, 
+  - redução de dimensão.
+  
+  
+.center[  
+&lt;img src="imagens/engrenagem.png" width="30%" /&gt;
+]
+]
+
+
+---
+
+
+## _Statistical Learning_ Workflow
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+Independente se usarmos .red[modelos ou algoritmos], se estamos ante um caso de aprendizado .red[supervisionado ou não supervisionado], se temos muitos ou poucos dados... o processo de modelagem precisa seguir um fluxo de trabalho bem definido.
+]
+
+--
+
+#### Passos para implementar um projeto de _Machine Learning_
+
+.pull-left[
+### CRISP-DM
+
+*   Entender o problema
+*   Entender os dados
+*   Preparar os dados (_Data wrangling_)
+*   Modelagem
+*   Avaliação de modelos
+*   Comunicar os resultados/modelo em produção
+
+
+]
+
+
+--
+
+.pull-right[
+
+.center[
+&lt;div class="figure"&gt;
+&lt;img src="imagens/CRISP-DM_Process.png" alt="CRISP-DM Process. Source: Wikipedia" width="50%" /&gt;
+&lt;p class="caption"&gt;CRISP-DM Process. Source: Wikipedia&lt;/p&gt;
+&lt;/div&gt;
+]
+
+]
+
+
+
+---
+class: inverse, center, middle
+# Aprendizado supervisionado
+---
+
+
+
+## Aprendizado supervisionado
+
+`$$Y = f(X) + e$$`
+
+
+--
+
+- `\(Y\)`: variável dependente/target;
+- `\(X\)`: conjunto de variáveis explicativas/independentes/features;
+- `\(e\)`: termo aleatório;
+- `\(f(\cdot)\)`: função que relaciona `\(X\)` com `\(Y\)`.
+
+--
+
+| Y | X  |
+|:-------:|:--------:|
+| variável dependente  |  variável independente |
+| variável explicada   |  variável explicativa |
+| variável resposta    |  variável de controle |
+| variável prevista    |  variável previsora   |
+| regressando          | regressor |
+| variável *target*    | covariável |
+|                      | _feature_ |
+
+
+
+
+---
+
+&lt;img src="imagens/our_mission.gif" width="50%" /&gt;
+
+---
+
+## Aprendizado supervisionado
+
+### Nossa missão:
+
+- Utilizar modelos/algoritmos para estimar `\(f(\cdot)\)`, ou seja, obter `\(\hat{f}(\cdot)\)` tal que `$$\hat{Y} := \hat{f}(X) \approx Y$$`
+
+--
+
+- Conhecendo `\(\hat{f}(\cdot)\)` faremos:
+  * Predição (foco do livro ISRL)
+  * Inferência (ACA228 é um bom ponto de início)
+  
+  
+--
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+_Statistical Learning_ refere-se a um conjunto de abordagens para estimar `\(f(\cdot)\)`
+.tr[
+— Gareth James, Daniela Witten, Trevor Hastie e Robert Tibshirani (2013) 
+]]
+
+---
+
+## Modelos ou algoritmos?
+
+Para estimar `\(f(\cdot)\)` podemos utilizar .blue[modelos] (ISRL chamá de _métodos paramétricos_) ou .blue[algoritmos] (ISRL chama de _métodos não paramétricos_)
+
+--
+
+.pull-left[
+#### Modelos | Métodos Paramétricos
+
+- Fazemos uma suposição sobre a forma funcional do modelo, por exemplo `\(Y = \beta_0 + \beta_1 X_1 + \ldots, \beta_p X_p + e\)`
+- Uma vez escolhido o modelo, precisamos um procedimento para estimar os parâmetros do modelo ($\hat{\beta}_1, \ldots, \hat{\beta}_p$).
+- Esta abordagem simplifica o problema (é muito mais facil estimar os parâmetros do modelo do que a função toda `\(f(\cdot)\)`)
+- .red[Desvatagem:] Quando o modelo escolhido está longe do modelo real `\(f(\cdot)\)` os resultados não são muito bons.
+
+
+]
+
+--
+
+.pull-right[
+
+#### Algoritmos | Métodos **não** Paramétricos
+
+- Não faz suposições sobre a forma funcional de `\(f(\cdot)\)`
+- São mais flexíveis (podem capturar diferentes formas funcionais de `\(f(\cdot)\)`).
+- .red[Desvatagem:] Estimar `\(f(\cdot)\)` requer muitas mais observações do que _apenas_ estimar os parâmetros
+- .red[Desvatagem:] Muitas vezes perdemos interpretação.
+- .red[Desvatagem:] Inferência estatística???
+
+]
+
+
+---
+
+## Modelos ou algoritmos?
+
+Por que precisamos de modelos, se são menos flexíveis, se temos algoritmos?
+
+- Podemos estar interessados em inferência (quais variáveis explicativas estão associadas com `\(Y\)`, qual é a relação entre `\(Y\)` e as variáveis explicativas).
+
+--
+
+
+- Muitas flexibilidade pode nos levar a um problema conhecido como _overfitting_ (bom desempenho dentro da amostra, ruim desempenho fora da amostra)
+
+--
+
+
+&gt; .red[**No jargão do dia a dia, chamamos modelos ou algoritmos de forma indistinta.** ]
+
+--
+
+&gt; .blue[**Sejam modelos ou algoritmos, o importante é saber se eles performam bem!**]
+
+--
+
+&gt; .green[**Daqui em diante utilizaremos o termo _modelo_ para nos referir tanto a modelos quanto algoritmos.**]
+
+---
+class: inverse, center, middle
+# Como saber se nosso modelo é bom?
+---
+
+## Avaliação de Modelos
+
+Quando utilizamos um modelo para uma tarefa específica, queremos saber quão bem/ruim a tarefa foi realizada. Existem várias métricas para mensurar a qualidade do modelo. Por enquanto focaremos apenas em 2:
+
+--
+
+.pull-left[
+### Regressão
+
+Mean Squared Error:
+
+`$$MSE = \dfrac{1}{n} \displaystyle \sum_{i=1}^n (y_i - \hat{y}_i)^2$$`
+
+]
+
+--
+
+.pull-right[
+### Clasificação
+
+Error Rate:
+
+`$$ER = \dfrac{1}{n} \displaystyle \sum_{i=1}^n I(y_i \neq \hat{y}_i)$$`
+
+]
+
+
+
+---
+
+## Avaliação de Modelos: Aprender ou Memorizar?
+
+
+- É possivel 'memorizar' o comportamento do nosso _dataset_ de forma que para cada valor de `\(X\)` saibamos exatamente o valor de `\(Y\)`.
+
+--
+
+- .blue[Mas qual é a desvantagem de memorizar?] Quando temos algum um pouco diferente daquilo que foi memorizado não sabemos o que fazer.
+
+--
+
+- .red[Quando construimos um modelo não queremos memorizar mas aprender dos dados] assim encontraremos regras/padrões que nos ajudarão a saber o que fazer quando enfrentemos situações um pouco diferentes.
+
+--
+
+### Como saber de nosso modelo memorizou ou aprendeu?
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+Para evitar que o modelo apenas memorize (ou saber se o modelo apenas memorizou) precisamos testar o aprendido em um novo _dataset_ para saber qual foi a performance do modelo. 
+]
+
+
+---
+
+## Avaliação de Modelos: Aprender ou Memorizar?
+
+- Para avaliar se nosso modelo aprendeu de fato e não apenas memorizou, precisamos testar o aprendido em um novo _dataset_.
+- Na prática temos apenas um único _dataset_
+
+--
+
+### Então, como avaliamos se nosso modelo aprendeu ou apenas memorizou?
+
+--
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+
+- Dividimos nosso _dataset_ em duas partes: dados para treinamento (**train**) e dados para teste (**test**)
+- Utilizamos os dados de treinamento para que nosso modelo `aprenda` dos dados.
+- Se nosso modelo aprendeu e não apenas memorizou, quando aplicarmos o aprendido em um novo conjunto de dados (**test**) nosso modelo terá um desempenho _bom desempenho_. 
+- Para avaliar o desempenho utilizaremos o `\(MSE\)`, `\(ER\)`, etc. (dependendo do problema que estivermos trabalhando)
+]
+
+
+
+---
+class: inverse, center, middle
+# Machine Learning ou Statistical Learning?
+---
+
+
+## Machine Learning ou Statistical Learning?
+
+
+
+.pull-left[
+### Machine Learning
+
+- Algorithmic Modeling Culture
+- Objetivo principal: Predição
+- Modelos _BlackBox_
+
+]
+
+--
+
+.pull-right[
+### Statistical Learning
+
+- Data Modeling Culture
+- Objetivo principal: Inferência
+- Modelos interpretáveis
+
+]
+
+--
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+*   Embora existam algumas diferenças, hoje em dia os termos são utilizados indistintamente para se referir ao conjunto de ferramentas para entender os dados/estimar `\(f(\cdot)\)`.
+*   Nós não faremos distinção entre ambos os termos e os utilizaremos indistintamente.
+*   Focaremos primeiro em predição `\(\hat{Y}\)` (foco do livro ISLR) e deixaremos a parte de inferência para o futuro (ACA228 é um bom ponto de início).
+]
+
+
+
+---
+class: inverse, center, middle
+# Um modelo intuitivo
+---
+
+## Um modelo intuitivo
+
+
+&lt;img src="ISL_01_files/figure-html/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+
+--
+
+O algoritmo chamado **KNN** (k-vizinhos mais próximos) que opera com essa mesma lógica! 💜.
+
+---
+
+## Um modelo intuitivo: KNN
+
+
+
+```r
+# Carregando os pacotes necessários
+library(tidymodels)     # cria um ecoosistema padrão para a modelagem
+library(kknn)           # Implementação do KNN
+
+# Importando dataset: mini_iris
+mini_iris &lt;- read.csv("./datasets/mini_iris.csv", sep = ";") %&gt;% mutate_if(is.character,as.factor)  
+
+# Especificamos o modelo
+modelo_spec &lt;- nearest_neighbor() %&gt;% set_engine("kknn") %&gt;%  set_mode("classification") 
+
+# Ajustamos o modelo (fit)
+modelo_fit &lt;- modelo_spec %&gt;% fit(Species ~ Sepal.Length + Sepal.Width, data = mini_iris)
+
+# Valores ajustado (predict)
+yhat &lt;- predict(modelo_fit, new_data = mini_iris)
+
+# Avaliando o Modelo
+table(mini_iris$Species,yhat$.pred_class)
+```
+
+```
+##            
+##             setosa virginica
+##   setosa        49         1
+##   virginica      0        50
+```
+
+
+
+---
+
+
+                  
+## Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+.pull-right[
+
+### Crie um conta no [Github](https://github.com)
+
+### No linkedin siga [R posts you might have missed!](https://www.linkedin.com/company/r-icymi/)
+
+### Se gostar de Phyton, siga [Python posts you might have missed!](https://www.linkedin.com/company/icymi-py/)
+
+###  .blue["mas ponham à prova todas as coisas e fiquem com o que é bom." (1 Tessalonicenses 5:21)]
+
+]
+
+
+---
+
+## Referências:
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com)
+- [Chatzidimitriou, K., Diamantopoulos, T., Papamichail, M., and Symeonidis, A. (2018). Practical Machine Learning in R. Leanpub.](https://leanpub.com/practical-machine-learning-r) 
+- [Breiman, L. (2001). Statistical modeling: The two cultures (with comments and a rejoinder by the author). Statistical science, 16(3), 199-231.](https://projecteuclid.org/journals/statistical-science/volume-16/issue-3/Statistical-Modeling--The-Two-Cultures-with-comments-and-a/10.1214/ss/1009213726.full)
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
