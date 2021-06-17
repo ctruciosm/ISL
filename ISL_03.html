@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-06-18" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"f856295f00214452b2229a36bc439b8e","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link href="libs/countdown/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown/countdown.js"></script>
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Statistical Learning:
+## Regressão Linear
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-06-18
+
+---
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+## Intuição
+
+Suponha que temos duas variáveis ( `\(Y\)` e `\(X\)`) e estamos interessados em entender/explicar o comportamento de `\(Y\)` em função de `\(X\)`.
+
+
+--
+
+
+
+&lt;img src="ISL_03_files/figure-html/unnamed-chunk-1-1.png" width="100%" /&gt;
+
+
+---
+
+
+## Intuição
+
+
+&gt; Tracejar uma reta de forma que "acompanhe" a relação que existe entre X e Y parece ser uma boa ideia para entendermos a relação entre as variáveis.
+
+--
+
+
+&lt;img src="ISL_03_files/figure-html/unnamed-chunk-2-1.png" width="100%" /&gt;
+
+
+
+---
+
+## Intuição
+
+&gt; Mas qual reta utilizar? de fato podemos obter infinitas retas!!!!
+
+--
+
+
+.center[.blue[**Escolheremos uma reta que minimize a distância entre o ponto observado e a reta tracejada.**]]
+
+
+--
+
+
+&lt;img src="ISL_03_files/figure-html/unnamed-chunk-3-1.png" width="100%" /&gt;
+
+
+---
+class: inverse, center, middle
+# Regressão Linear
+---
+
+## Regressão Linear
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+**Regressão Linear** é um dos métodos de aprendizado supervisionado mais antigos e utilizados. Baseia-se, entre outras suposições, na relação linear entre a variavel dependente `\(y\)` e um conjunto de `\(k\)` variaveis explicativas `\(x_1, x_2, \cdots, x_k\)`. `$$y_i = \underbrace{\beta_0 + \beta_1 x_{i1} + \cdots + \beta_k x_{ik}}_{f(x)} + u$$`
+
+
+
+A simplicidade do método faz com que seja acessivel e fácil de entender/implementar. Contudo, está simplicidade tem feito que o método seja utilizado de forma inapropriada em muitas situações. 
+]
+
+--
+
+Como de praxe, nosso objetivo é estimar `\(\hat{f}(x)\)` que, no caso do modelo linear, reduce-se a obter `\(\hat{\beta}_0, \hat{\beta}_1, \ldots, \hat{\beta}_k\)`
+
+--
+
+😕 **Como obter os `\(\hat{\beta}\)`s?** 😕  
+
+
+--
+
+
+O [Método de Mínimos Quadrados Ordinários (MQO)](https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/) estimas os `\(\beta\)`s de forma que minimizem a soma de quadrados dos resíduos.
+
+
+---
+class: inverse, center, middle
+# Regressão Linear no R
+---
+
+
+## Regressão Linear no R
+
+O _dataset_ [Advertising](https://raw.githubusercontent.com/ctruciosm/ISLR/master/dataset/Advertising.csv) contém informação de 200 lojas e 4 variaveis.
+
+
+
+```r
+library(dplyr)
+uri &lt;- "https://raw.githubusercontent.com/ctruciosm/ISLR/master/dataset/Advertising.csv"
+advertising &lt;- read.csv(uri)
+glimpse(advertising)
+```
+
+```
+## Rows: 200
+## Columns: 5
+## $ X         &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 1…
+## $ TV        &lt;dbl&gt; 230.1, 44.5, 17.2, 151.5, 180.8, 8.7, 57.5, 120.2, 8.6, 199.…
+## $ Radio     &lt;dbl&gt; 37.8, 39.3, 45.9, 41.3, 10.8, 48.9, 32.8, 19.6, 2.1, 2.6, 5.…
+## $ Newspaper &lt;dbl&gt; 69.2, 45.1, 69.3, 58.5, 58.4, 75.0, 23.5, 11.6, 1.0, 21.2, 2…
+## $ Sales     &lt;dbl&gt; 22.1, 10.4, 9.3, 18.5, 12.9, 7.2, 11.8, 13.2, 4.8, 10.6, 8.6…
+```
+
+
+Queremos um modelo preditivo para prever o valor de `Sales` utilizando a informação contida nas variáveis  `TV`, `Radio` e `Newspaper`
+
+
+--
+
+
+
+```r
+# X é apenas um Index, removemos ele do dataset
+advertising &lt;- advertising %&gt;% select(-X)
+```
+
+
+---
+
+## Regressão Linear no R
+
+Queremos um modelo da forma:
+
+`$$Sales = \beta_0 + \beta_1 \rm{TV} + \beta_2 \rm{Radio} + \beta_3 \rm{Newspaper} + u$$`
+--
+
+
+.panelset[
+
+.panel[.panel-name[Splitting data]
+
+
+```r
+library(rsample)
+*set.seed(1234)
+data_split &lt;- initial_split(advertising, prop = 3/4)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+```
+
+]
+
+.panel[.panel-name[Forma fácil]
+
+
+```r
+# Treinamos o modelo SEMPRE utilizando os train_data
+modelo &lt;- lm(Sales~TV + Radio + Newspaper, data = train_data)
+yhat_test &lt;- predict(modelo, newdata = test_data)
+test_data$yhat &lt;- yhat_test
+```
+
+
+]
+
+.panel[.panel-name[Tidymodels]
+
+
+```r
+library(tidymodels)
+model_spec &lt;- linear_reg() %&gt;% 
+              set_engine("lm")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Sales ~ TV + Radio + Newspaper, data = train_data)
+yhat_test_tm &lt;- predict(model_fit, new_data = test_data)
+test_data$yhat_tm &lt;- yhat_test_tm$.pred
+```
+
+]
+
+.panel[.panel-name[Avaliando o modelo]
+
+O pacote [yardstick](https://yardstick.tidymodels.org) que está embutido no `todymodels` nos ajudará para avaliar o modelo
+
+
+```r
+# Podemos usar yhat ou yhat_tm os resultados são os mesmos.
+test_data %&gt;% mae(Sales, yhat) 
+```
+
+```
+## # A tibble: 1 x 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 mae     standard        1.28
+```
+
+```r
+test_data %&gt;% rmse(Sales, yhat)
+```
+
+```
+## # A tibble: 1 x 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        1.53
+```
+
+
+]]
+
+
+---
+
+## Regressão Linear no R
+
+
+```r
+# Split
+set.seed(1234)
+data_split &lt;- initial_split(advertising, prop = 3/4)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+# Fit
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_fit &lt;- model_spec %&gt;% fit(Sales ~ TV + Radio + Newspaper, data = train_data)
+# Predict
+yhat_test_tm &lt;- predict(model_fit, new_data = test_data)
+test_data$yhat_tm &lt;- yhat_test_tm$.pred
+# Evaluate
+test_data %&gt;% mae(Sales, yhat_tm) 
+test_data %&gt;% rmse(Sales, yhat_tm)
+```
+
+#### .red[Hands-on:]
+
+Faça as mudanças necessárias no código para fazer as seguintes regressões:
+
+
+1. Sales ~ TV
+2. Sales ~ TV + Radio
+3. Sales ~ TV + Radio + Newspaper
+4. Sales ~ TV + TV `\(^2\)` + Radio + Newspaper
+
+
+
+<div class="countdown" id="timer_60cb9596" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">04</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+
+
+---
+
+## Hands-on: Solução
+
+
+```r
+# Split
+set.seed(1234)
+data_split &lt;- initial_split(advertising, prop = 3/4)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+# Fit
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_01_fit &lt;- model_spec %&gt;% fit(Sales ~ TV, data = train_data) 
+model_02_fit &lt;- model_spec %&gt;% fit(Sales ~ TV + Radio, data = train_data) 
+model_03_fit &lt;- model_spec %&gt;% fit(Sales ~ TV + Radio + Newspaper, data = train_data) 
+model_04_fit &lt;- model_spec %&gt;% fit(Sales ~ TV + I(TV^2) + Radio +  Newspaper, data = train_data) 
+# Predict
+yhat_test_01 &lt;- predict(model_01_fit, new_data = test_data) 
+yhat_test_02 &lt;- predict(model_02_fit, new_data = test_data) 
+yhat_test_03 &lt;- predict(model_03_fit, new_data = test_data) 
+yhat_test_04 &lt;- predict(model_04_fit, new_data = test_data) 
+
+test_data &lt;- test_data %&gt;% mutate(yhat_01 = yhat_test_01$.pred,
+                                  yhat_02 = yhat_test_02$.pred,
+                                  yhat_03 = yhat_test_03$.pred,
+                                  yhat_04 = yhat_test_04$.pred)
+```
+
+---
+
+## Hands-on: Solução
+
+
+```r
+# Evaluate
+test_data %&gt;% mae(Sales,yhat_01)
+test_data %&gt;% mae(Sales,yhat_02)
+test_data %&gt;% mae(Sales,yhat_03)
+test_data %&gt;% mae(Sales,yhat_04)
+
+test_data %&gt;% rmse(Sales,yhat_01)
+test_data %&gt;% rmse(Sales,yhat_02)
+test_data %&gt;% rmse(Sales,yhat_03)
+test_data %&gt;% rmse(Sales,yhat_04)
+```
+
+
+---
+
+
+## Data-Tips:
+
+
+.left-column[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.right-column[
+
+- O MRL pode ser muito mais explorado através da inferência estatística (não apenas predição) - **ACA228**
+
+- O MRL (como todos os outros modelos) é baseado em um conjunto de hipóteses. A não verificação dessas hipóteses tem um grande impacto na performance do modelo.
+
+- Aqui temos utilizado MAE e RMSE para avaliar a predição, mas existem outras medidas que podem ser utilizadas.
+
+
+.red[$$MAE =  \dfrac{\sum_{i=1}^n |y_i - \hat{y}_i| }{n}$$]
+
+
+.red[$$RMSE = \sqrt{\dfrac{\sum_{i=1}^n (y_i - \hat{y}_i)^2 }{n}}$$]
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 3
+
+
+### .blue[Quer saber mais um pouco do MRL?]
+
+- Trucíos (2021, Feb. 25). Statistical Data Science: Intro à Regressão Linear. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/](https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/)
+- Trucíos (2021, April 1). Statistical Data Science: Mínimos Quadrados Ordinários. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/](https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

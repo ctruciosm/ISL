@@ -1,0 +1,375 @@
+---
+title: "Statistical Learning:"
+subtitle: "Regressão Linear"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date() + 1`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+
+## Intuição
+
+Suponha que temos duas variáveis ( $Y$ e $X$) e estamos interessados em entender/explicar o comportamento de $Y$ em função de $X$.
+
+
+--
+
+
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE}
+library(ggplot2)
+library(car)
+ggplot(Prestige) + geom_point(aes(x = education, y = income)) + ylab("Y") + xlab("X")
+```
+
+
+---
+
+
+## Intuição
+
+
+> Tracejar uma reta de forma que "acompanhe" a relação que existe entre X e Y parece ser uma boa ideia para entendermos a relação entre as variáveis.
+
+--
+
+
+```{r echo=FALSE}
+library(ggplot2)
+library(car)
+ggplot(Prestige) + geom_point(aes(x = education, y = income)) + 
+  geom_smooth(aes(x = education, y = income), method = "lm", se = FALSE) + ylab("X") + xlab("Y") +
+  geom_abline(intercept = -2000, slope = 915, color = "red") + 
+  geom_abline(intercept = -2853.6 + 500, slope = 898.8 + 30, color = "red") +
+  geom_abline(intercept = -2853.6 - 500, slope = 898.8 -40, color = "green") +
+  geom_abline(intercept = -2853.6 - 1000, slope = 898.8 + 200, color = "orange") +
+  geom_abline(intercept = -2853.6 - 1300, slope = 898.8 +150, color = "violet") +
+  geom_abline(intercept = -2853.6 + 732, slope = 898.8 + 22, color = "gray") +
+  geom_abline(intercept = -2853.6 -900, slope = 898.8 + 200, color = "yellow") +
+  geom_abline(intercept = -2853.6 + 60, slope = 898.8 + 10, color = "green4") + 
+  geom_abline(intercept = -2853.6 - 1500, slope = 898.8 + 100, color = "black") 
+```
+
+
+
+---
+
+## Intuição
+
+> Mas qual reta utilizar? de fato podemos obter infinitas retas!!!!
+
+--
+
+
+.center[.blue[**Escolheremos uma reta que minimize a distância entre o ponto observado e a reta tracejada.**]]
+
+
+--
+
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE}
+modelo = lm(income~education, data = Prestige)
+Prestige$yhat <- predict(modelo)
+ggplot(Prestige, aes(x = education, y = income)) + 
+  geom_point() +
+  geom_smooth(formula = y ~ x, method="lm", se=FALSE) +
+  geom_point(aes(x = education, y=yhat), col='red4') +
+  geom_segment(aes(xend=education, yend=yhat), col='red', lty='dashed') + 
+  ylab("Y") + xlab("X")
+```
+
+
+---
+class: inverse, center, middle
+# Regressão Linear
+---
+
+## Regressão Linear
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+**Regressão Linear** é um dos métodos de aprendizado supervisionado mais antigos e utilizados. Baseia-se, entre outras suposições, na relação linear entre a variavel dependente $y$ e um conjunto de $k$ variaveis explicativas $x_1, x_2, \cdots, x_k$. $$y_i = \underbrace{\beta_0 + \beta_1 x_{i1} + \cdots + \beta_k x_{ik}}_{f(x)} + u$$
+
+
+
+A simplicidade do método faz com que seja acessivel e fácil de entender/implementar. Contudo, está simplicidade tem feito que o método seja utilizado de forma inapropriada em muitas situações. 
+]
+
+--
+
+Como de praxe, nosso objetivo é estimar $\hat{f}(x)$ que, no caso do modelo linear, reduce-se a obter $\hat{\beta}_0, \hat{\beta}_1, \ldots, \hat{\beta}_k$
+
+--
+
+`r emo::ji("confused")` **Como obter os $\hat{\beta}$s?** `r emo::ji("confused")`  
+
+
+--
+
+
+O [Método de Mínimos Quadrados Ordinários (MQO)](https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/) estimas os $\beta$s de forma que minimizem a soma de quadrados dos resíduos.
+
+
+---
+class: inverse, center, middle
+# Regressão Linear no R
+---
+
+
+## Regressão Linear no R
+
+O _dataset_ [Advertising](https://raw.githubusercontent.com/ctruciosm/ISLR/master/dataset/Advertising.csv) contém informação de 200 lojas e 4 variaveis.
+
+
+```{r}
+library(dplyr)
+uri <- "https://raw.githubusercontent.com/ctruciosm/ISLR/master/dataset/Advertising.csv"
+advertising <- read.csv(uri)
+glimpse(advertising)
+```
+
+
+Queremos um modelo preditivo para prever o valor de `Sales` utilizando a informação contida nas variáveis  `TV`, `Radio` e `Newspaper`
+
+
+--
+
+
+```{r}
+# X é apenas um Index, removemos ele do dataset
+advertising <- advertising %>% select(-X)
+```
+
+
+---
+
+## Regressão Linear no R
+
+Queremos um modelo da forma:
+
+$$Sales = \beta_0 + \beta_1 \rm{TV} + \beta_2 \rm{Radio} + \beta_3 \rm{Newspaper} + u$$
+--
+
+
+.panelset[
+
+.panel[.panel-name[Splitting data]
+
+```{r}
+library(rsample)
+set.seed(1234) #<<
+data_split <- initial_split(advertising, prop = 3/4)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+```
+
+]
+
+.panel[.panel-name[Forma fácil]
+
+```{r}
+# Treinamos o modelo SEMPRE utilizando os train_data
+modelo <- lm(Sales~TV + Radio + Newspaper, data = train_data)
+yhat_test <- predict(modelo, newdata = test_data)
+test_data$yhat <- yhat_test
+```
+
+
+]
+
+.panel[.panel-name[Tidymodels]
+
+```{r}
+library(tidymodels)
+model_spec <- linear_reg() %>% 
+              set_engine("lm")
+model_fit <- model_spec %>% 
+             fit(Sales ~ TV + Radio + Newspaper, data = train_data)
+yhat_test_tm <- predict(model_fit, new_data = test_data)
+test_data$yhat_tm <- yhat_test_tm$.pred
+```
+
+]
+
+.panel[.panel-name[Avaliando o modelo]
+
+O pacote [yardstick](https://yardstick.tidymodels.org) que está embutido no `todymodels` nos ajudará para avaliar o modelo
+
+```{r}
+# Podemos usar yhat ou yhat_tm os resultados são os mesmos.
+test_data %>% mae(Sales, yhat) 
+test_data %>% rmse(Sales, yhat)
+```
+
+
+]]
+
+
+---
+
+## Regressão Linear no R
+
+```{r, eval=FALSE}
+# Split
+set.seed(1234)
+data_split <- initial_split(advertising, prop = 3/4)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+# Fit
+model_spec <- linear_reg() %>% set_engine("lm")
+model_fit <- model_spec %>% fit(Sales ~ TV + Radio + Newspaper, data = train_data)
+# Predict
+yhat_test_tm <- predict(model_fit, new_data = test_data)
+test_data$yhat_tm <- yhat_test_tm$.pred
+# Evaluate
+test_data %>% mae(Sales, yhat_tm) 
+test_data %>% rmse(Sales, yhat_tm)
+```
+
+#### .red[Hands-on:]
+
+Faça as mudanças necessárias no código para fazer as seguintes regressões:
+
+
+1. Sales ~ TV
+2. Sales ~ TV + Radio
+3. Sales ~ TV + Radio + Newspaper
+4. Sales ~ TV + TV $^2$ + Radio + Newspaper
+
+
+
+```{r, echo = FALSE}
+library(countdown)
+countdown(minutes = 4, seconds = 0, bottom = 0)
+```
+
+
+---
+
+## Hands-on: Solução
+
+```{r, eval=FALSE}
+# Split
+set.seed(1234)
+data_split <- initial_split(advertising, prop = 3/4)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+# Fit
+model_spec <- linear_reg() %>% set_engine("lm")
+model_01_fit <- model_spec %>% fit(Sales ~ TV, data = train_data) 
+model_02_fit <- model_spec %>% fit(Sales ~ TV + Radio, data = train_data) 
+model_03_fit <- model_spec %>% fit(Sales ~ TV + Radio + Newspaper, data = train_data) 
+model_04_fit <- model_spec %>% fit(Sales ~ TV + I(TV^2) + Radio +  Newspaper, data = train_data) 
+# Predict
+yhat_test_01 <- predict(model_01_fit, new_data = test_data) 
+yhat_test_02 <- predict(model_02_fit, new_data = test_data) 
+yhat_test_03 <- predict(model_03_fit, new_data = test_data) 
+yhat_test_04 <- predict(model_04_fit, new_data = test_data) 
+
+test_data <- test_data %>% mutate(yhat_01 = yhat_test_01$.pred,
+                                  yhat_02 = yhat_test_02$.pred,
+                                  yhat_03 = yhat_test_03$.pred,
+                                  yhat_04 = yhat_test_04$.pred)
+```
+
+---
+
+## Hands-on: Solução
+
+```{r, eval = FALSE}
+# Evaluate
+test_data %>% mae(Sales,yhat_01)
+test_data %>% mae(Sales,yhat_02)
+test_data %>% mae(Sales,yhat_03)
+test_data %>% mae(Sales,yhat_04)
+
+test_data %>% rmse(Sales,yhat_01)
+test_data %>% rmse(Sales,yhat_02)
+test_data %>% rmse(Sales,yhat_03)
+test_data %>% rmse(Sales,yhat_04)
+```
+
+
+---
+
+
+## Data-Tips:
+
+
+.left-column[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.right-column[
+
+- O MRL pode ser muito mais explorado através da inferência estatística (não apenas predição) - **ACA228**
+
+- O MRL (como todos os outros modelos) é baseado em um conjunto de hipóteses. A não verificação dessas hipóteses tem um grande impacto na performance do modelo.
+
+- Aqui temos utilizado MAE e RMSE para avaliar a predição, mas existem outras medidas que podem ser utilizadas.
+
+
+.red[$$MAE =  \dfrac{\sum_{i=1}^n |y_i - \hat{y}_i| }{n}$$]
+
+
+.red[$$RMSE = \sqrt{\dfrac{\sum_{i=1}^n (y_i - \hat{y}_i)^2 }{n}}$$]
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 3
+
+
+### .blue[Quer saber mais um pouco do MRL?]
+
+- Trucíos (2021, Feb. 25). Statistical Data Science: Intro à Regressão Linear. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/](https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/)
+- Trucíos (2021, April 1). Statistical Data Science: Mínimos Quadrados Ordinários. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/](https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/)
