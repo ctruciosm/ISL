@@ -2,7 +2,7 @@
 title: "Statistical Learning:"
 subtitle: "Regressão Linear"  
 author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
-date: '`r Sys.Date() + 1`'
+date: '`r Sys.Date()`'
 institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
 output:
   xaringan::moon_reader:
@@ -371,5 +371,7 @@ test_data %>% rmse(Sales,yhat_04)
 
 ### .blue[Quer saber mais um pouco do MRL?]
 
-- Trucíos (2021, Feb. 25). Statistical Data Science: Intro à Regressão Linear. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/](https://ctruciosm.github.io/statblog/posts/2021-02-25-intro-regressao-linear/)
-- Trucíos (2021, April 1). Statistical Data Science: Mínimos Quadrados Ordinários. Retrieved from [https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/](https://ctruciosm.github.io/statblog/posts/2021-04-01-posts2021-04-01-minimos-quadrados-ordinarios/)
+
+
+- Trucíos (2021, Feb. 25). Carlos Trucíos: Intro à Regressão Linear. Retrieved from [https://ctruciosm.github.io/posts/2021-02-25-intro-regressao-linear/](https://ctruciosm.github.io/posts/2021-02-25-intro-regressao-linear/)
+- Trucíos (2021, April 1). Carlos Trucíos: Mínimos Quadrados Ordinários. Retrieved from [https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/](https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/)

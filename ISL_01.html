@@ -4,14 +4,14 @@
     <title>Statistical Learning:</title>
     <meta charset="utf-8" />
     <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
-    <meta name="date" content="2021-05-21" />
+    <meta name="date" content="2021-06-18" />
     <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
     <script src="libs/tile-view/tile-view.js"></script>
     <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
     <link href="libs/panelset/panelset.css" rel="stylesheet" />
     <script src="libs/panelset/panelset.js"></script>
-    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"e91d35a0653e43eda21f435638a7a277","expires":14}</script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xec32d3051fa4c758a92bb08fa0b266d","expires":14}</script>
     <script src="libs/himalaya/himalaya.js"></script>
     <script src="libs/js-cookie/js.cookie.js"></script>
     <link href="libs/editable/editable.css" rel="stylesheet" />
@@ -40,7 +40,7 @@ class: center, middle, inverse, title-slide
 ## Introdução
 ### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
 ### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
-### 2021-05-21
+### 2021-06-18
 
 ---
 
@@ -238,7 +238,7 @@ class: inverse, center, middle
 
 ## Aprendizado supervisionado
 
-### 👨‍💻 👩‍💻 👩‍💻  Nossa missão:
+### 👩‍💻 👨‍💻 👨‍💻  Nossa missão:
 
 - Utilizar modelos/algoritmos para estimar `\(f(\cdot)\)`, ou seja, obter `\(\hat{f}(\cdot)\)` tal que `$$\hat{Y} := \hat{f}(X) \approx Y$$`
 
@@ -465,7 +465,8 @@ library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
 
 # Importando dataset: mini_iris
-mini_iris &lt;- read.csv("./datasets/mini_iris.csv", sep = ";") %&gt;% 
+uri &lt;- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/mini_iris.csv"
+mini_iris &lt;- read.csv(uri, sep = ";") %&gt;% 
   mutate_if(is.character,as.factor)  
 
 # Especificamos o modelo

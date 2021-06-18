@@ -4,14 +4,14 @@
     <title>Statistical Learning:</title>
     <meta charset="utf-8" />
     <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
-    <meta name="date" content="2021-06-11" />
+    <meta name="date" content="2021-06-18" />
     <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
     <script src="libs/tile-view/tile-view.js"></script>
     <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
     <link href="libs/panelset/panelset.css" rel="stylesheet" />
     <script src="libs/panelset/panelset.js"></script>
-    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"x6897f01df75460aa317086346f700b9","expires":14}</script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xc9d0d8e0e2541a79a7e30d258926f5b","expires":14}</script>
     <script src="libs/himalaya/himalaya.js"></script>
     <script src="libs/js-cookie/js.cookie.js"></script>
     <link href="libs/editable/editable.css" rel="stylesheet" />
@@ -41,7 +41,7 @@ class: center, middle, inverse, title-slide
 ## KNN: K-vizinhos mais próximos
 ### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
 ### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
-### 2021-06-11
+### 2021-06-18
 
 ---
 
@@ -139,6 +139,7 @@ O _dataset_ `knn_exemplo` contém informações de 15 observações dividias em 
 
 ```r
 # Importando os dados
+library(dplyr)
 uri &lt;- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/knn_exemplo.txt"
 knn_exemplo &lt;- read.table(uri, header = TRUE)
 glimpse(knn_exemplo)

@@ -444,7 +444,7 @@ class: inverse, center, middle
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
-mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+mini_iris <- read.csv("https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
 ggplot(mini_iris) + geom_point(aes(Sepal.Length, Sepal.Width, color = Species))
 ```
 
@@ -464,7 +464,8 @@ library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
 
 # Importando dataset: mini_iris
-mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% 
+uri <- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/mini_iris.csv"
+mini_iris <- read.csv(uri, sep = ";") %>% 
   mutate_if(is.character,as.factor)  
 
 # Especificamos o modelo
@@ -484,7 +485,6 @@ table(mini_iris$Species,yhat$.pred_class)
 
 ## Um modelo intuitivo: KNN
 
-```{r}
 
 ```{r, echo = FALSE}
 # Carregando os pacotes necessários
@@ -492,7 +492,8 @@ library(tidymodels)     # cria um ecoosistema padrão para a modelagem
 library(kknn)           # Implementação do KNN
 
 # Importando dataset: mini_iris
-mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+uri <- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/mini_iris.csv"
+mini_iris <- read.csv(uri, sep = ";") %>% mutate_if(is.character,as.factor)  
 
 # Especificamos o modelo
 modelo_spec <- nearest_neighbor() %>% set_engine("kknn") %>%  set_mode("classification") 

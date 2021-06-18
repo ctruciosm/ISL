@@ -57,7 +57,8 @@ style_xaringan()
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
-mini_iris <- read.csv("./datasets/mini_iris.csv", sep = ";") %>% mutate_if(is.character,as.factor)  
+uri <- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/mini_iris.csv"
+mini_iris <- read.csv(uri, sep = ";") %>% mutate_if(is.character,as.factor)  
 ggplot(mini_iris) + geom_point(aes(Sepal.Length, Sepal.Width, color = Species))
 ```
 
@@ -133,6 +134,7 @@ O _dataset_ `knn_exemplo` contém informações de 15 observações dividias em 
 
 ```{r, eval = FALSE}
 # Importando os dados
+library(dplyr)
 uri <- "https://raw.githubusercontent.com/ctruciosm/ctruciosm.github.io/master/datasets/knn_exemplo.txt"
 knn_exemplo <- read.table(uri, header = TRUE)
 glimpse(knn_exemplo)
