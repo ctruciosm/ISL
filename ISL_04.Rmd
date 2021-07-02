@@ -254,6 +254,8 @@ countdown(minutes = 5, seconds = 0, bottom = 0)
 
 - Knn é outro metodo de classificação, compare knn e regressão logística nos problemas estudados com os _datasets_ `Default`, `Smarket`. 
 - Além da accurácia, existem outras medidas para avaliar nossa classificação, pesquise e saiba quais são.
+- E se tivermos mais de duas categorias? Podemos tambem utilizar regressão logistica (utilizará a distribuição multinomial por trás dos panos)
+- Temos estudados apenas a parte introdutória da regressão logística, um estudo detalhado dela (e outros modelos lineares generalizados) podem ser obtidos no livro [Foundations of Linear and Generalized Linear Models,](Foundations of Linear and Generalized Linear Models) do [Alan Agresti](http://users.stat.ufl.edu/~aa/).
 
 
 ]
