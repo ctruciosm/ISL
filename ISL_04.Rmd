@@ -227,7 +227,7 @@ test_data %>% accuracy(default, yhat)
 
 #### .red[Hands-on:]
 
-O _dataset_ `Smarket` do pacote `ISRL` contem 1250 observações com observações sobre os retornos financeiros de uma determinada ação. `Today` corresponde ao retorno observado no dia $t$ e `Direction` aponta se o preço da ação subiu (Up) ou caiu (Down) com respeito ao preço do dia anterior.
+O _dataset_ `Smarket` do pacote `ISLR` contem 1250 observações com observações sobre os retornos financeiros de uma determinada ação. `Today` corresponde ao retorno observado no dia $t$ e `Direction` aponta se o preço da ação subiu (Up) ou caiu (Down) com respeito ao preço do dia anterior.
 
 Queremos um modelo preditivo que, com base na informação contida nas variáveis `Volume`, `Lag1`, `Lag2`, `Lag3`, `Lag4` e `Lag5`, nos diga se o preço da ação vai subir ou cair.
 
