@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-07-02" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"bd57efccb2d34c7fad6f85771ea0843f","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link href="libs/countdown/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown/countdown.js"></script>
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Statistical Learning:
+## Classification Part I: Logistic Regression
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-07-02
+
+---
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+## Intuição
+
+Quando trabalhamos com um modelo de regressão linear, estamos interessados em relações do tipo `$$y = \beta_0 + \beta_1 x_1 + \cdots + \beta_k x_k + u,$$`
+
+`$$E(y|X) = \beta_0 + \beta_1 x_1 + \cdots + \beta_k x_k$$`
+
+
+--
+
+Imagine agora que:
+
+- Estamos ante um problema de classificação (y: 0 ou 1),
+
+--
+
+- Em lugar de modelar `\(Y\)`, queremos modelar `\(P(Y=1|X) = p(X)\)` 
+
+--
+
+- Classificamos uma nova observação `\(x_0\)` na classe 1 se, por exemplo `\(P(Y=1|x_0) &gt; 0.5\)`
+
+--
+
+- Como modelar `\(P(Y=1|X) = p(X)\)`?
+
+
+---
+class: inverse, center, middle
+# Regressão Logística
+---
+
+
+## Regressão Logística
+
+
+### Como modelar `\(p(X)\)`?
+
+
+
+--
+
+
+.pull-left[ 
+
+`$$p(X) = \beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k$$`
+
+- Conhecido como o modelo de probabilidade linear
+- Quando `\(y = 0 \text{ ou } 1\)`, `\(\underbrace{E(y|X)}_{P(Y=1|X) := p(X)} = \beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k\)`
+- Pode produzir valores fora do `\([0,1]\)`]
+
+
+--
+
+
+.pull-right[
+
+`$$p(X) = \dfrac{e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k}}{1+e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k}}$$`
+- Utiliza a função logística para evitar os problemas que apresenta o modelo de probabilidade linear
+- `\(f(x) = \dfrac{e^x}{1+e^x}\)`
+- Os valores de `\(p(X)\)` estarão sempre no intervalo `\([0,1]\)`
+
+]
+
+
+---
+
+## Regressão Logística
+
+
+.center[
+&lt;div class="figure"&gt;
+&lt;img src="imagens/logisticregression.png" alt="Probabilidade Linear vs. Regressão Logística. Source: /www.machinelearningplus.com" width="80%" /&gt;
+&lt;p class="caption"&gt;Probabilidade Linear vs. Regressão Logística. Source: /www.machinelearningplus.com&lt;/p&gt;
+&lt;/div&gt;
+]
+
+
+
+
+---
+class: inverse, center, middle
+# Regressão Logística no R
+---
+
+
+## Regressão Logística no R
+
+O _dataset_ `Default` do pacote `ISLR` contém informações de 10,000 indivíduos. Estas informações são referentes à renda (income), balance bancario (balance), se é estudante ou não (student) e se entrou em default ou não (default) no banco.
+
+
+```r
+#install.packages("ISLR")
+#install.packages("tidyverse")
+library(ISLR)
+library(tidyverse)
+glimpse(Default)
+```
+
+```
+## Rows: 10,000
+## Columns: 4
+## $ default &lt;fct&gt; No, No, No, No, No, No, No, No, No, No, No, No, No, No, No, No…
+## $ student &lt;fct&gt; No, Yes, No, No, No, Yes, No, Yes, No, No, Yes, Yes, No, No, N…
+## $ balance &lt;dbl&gt; 729.5265, 817.1804, 1073.5492, 529.2506, 785.6559, 919.5885, 8…
+## $ income  &lt;dbl&gt; 44361.625, 12106.135, 31767.139, 35704.494, 38463.496, 7491.55…
+```
+
+
+--
+
+
+.blue[Com base nestas informações queremos construir um modelo preditivo que nos auxilie na decisão da conceder (ou não) crédito a um determinado indivíduo.]
+
+---
+
+## Regressão Logística no R
+
+
+.panelset[
+
+.panel[.panel-name[Splitting data]
+
+
+```r
+library(rsample)
+set.seed(321) 
+data_split &lt;- initial_split(Default, prop = 3/4, strata = default)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+```
+
+.red[Obs:] Para que serve o argumento `strata`?
+
+]
+
+.panel[.panel-name[Forma fácil]
+
+
+```r
+# Treinamos o modelo SEMPRE utilizando os train_data
+modelo &lt;- glm(default ~ student + balance + income, data = train_data,
+*             family = "binomial")
+yhat_prob &lt;- predict(modelo, newdata = test_data, type = "response")
+yhat_test &lt;- ifelse(yhat_prob &lt; 0.5, "No", "Yes")
+table(test_data$default,yhat_test)
+```
+
+```
+##      yhat_test
+##         No  Yes
+##   No  2427    6
+##   Yes   40   27
+```
+
+O modelo teve 98.16% das novas observações corretamente classificadas.
+
+]
+
+.panel[.panel-name[Tidymodels]
+
+
+```r
+library(tidymodels)
+model_spec &lt;- logistic_reg() %&gt;% 
+              set_engine("glm")
+model_fit &lt;- model_spec %&gt;% 
+             fit(default ~ student + balance + income, data = train_data)
+yhat_test &lt;- predict(model_fit, new_data = test_data)
+*test_data$yhat &lt;- yhat_test$.pred_class
+table(test_data$default,test_data$yhat)
+```
+
+```
+##      
+##         No  Yes
+##   No  2427    6
+##   Yes   40   27
+```
+
+```r
+test_data %&gt;% accuracy(default, yhat)
+```
+
+```
+## # A tibble: 1 x 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.982
+```
+
+]]
+
+
+---
+
+## Regressão Logística no R
+
+
+```r
+# Split
+data_split &lt;- initial_split(Default, prop = 3/4, strata = default)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+# Fit
+model_spec &lt;- logistic_reg() %&gt;% set_engine("glm")
+model_fit &lt;- model_spec %&gt;% fit(default ~ student + balance + income, data = train_data)
+# Predict
+test_data$yhat &lt;- predict(model_fit, new_data = test_data)$.pred_class
+# Evaluate
+test_data %&gt;% accuracy(default, yhat)
+```
+
+#### .red[Hands-on:]
+
+O _dataset_ `Smarket` do pacote `ISRL` contem 1250 observações com observações sobre os retornos financeiros de uma determinada ação. `Today` corresponde ao retorno observado no dia `\(t\)` e `Direction` aponta se o preço da ação subiu (Up) ou caiu (Down) com respeito ao preço do dia anterior.
+
+Queremos um modelo preditivo que, com base na informação contida nas variáveis `Volume`, `Lag1`, `Lag2`, `Lag3`, `Lag4` e `Lag5`, nos diga se o preço da ação vai subir ou cair.
+
+
+
+<div class="countdown" id="timer_60df7353" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">05</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+
+
+---
+
+
+## Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Knn é outro metodo de classificação, compare knn e regressão logística nos problemas estudados com os _datasets_ `Default`, `Smarket`. 
+- Além da accurácia, existem outras medidas para avaliar nossa classificação, pesquise e saiba quais são.
+
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 3
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
