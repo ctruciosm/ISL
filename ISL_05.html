@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-07-16" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"x38fa03de07144e181a3b7df9a19d911","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link href="libs/countdown/countdown.css" rel="stylesheet" />
+    <script src="libs/countdown/countdown.js"></script>
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Classification Part II: Análise Discriminante
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-07-16
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+## Intuição
+
+Sejam as seguintes variáveis aleatórias `\(X_A \sim N(\mu_A, \sigma)\)`  e  `\(X_B \sim N(\mu_B,\sigma)\)`
+
+--
+
+&lt;img src="ISL_05_files/figure-html/unnamed-chunk-1-1.png" width="100%" /&gt;
+
+---
+
+## Intuição
+
+O que fizemos intuitivamente é atribuir `\(x\)` ao grupo que consideramos, `\(x\)` seja mais [_verosimil_](https://www.lexico.pt/verosimil/) de pertencer.
+
+--
+
+
+### Razão de verosimilhança
+
+
+`$$\lambda(x) = \dfrac{f_A(x)}{f_B(x)} = \dfrac{\dfrac{1}{\sqrt{2\pi} \sigma} exp \Big(- \dfrac{1}{2} \Big(\dfrac{x-\mu_A}{\sigma} \Big)^2 \Big)}{\dfrac{1}{\sqrt{2\pi} \sigma} exp \Big(- \dfrac{1}{2} \Big(\dfrac{x-\mu_B}{2\sigma} \Big)^2 \Big)}$$`
+
+--
+
+- Se `\(\lambda(x) &gt; 1\)`, `\(x\)` é classificado no grupo `\(A\)` (pois é mais _verosimil_ que `\(x \in A\)`)
+
+--
+
+- Se `\(\lambda(x) &lt; 1\)`, `\(x\)` é classificado no grupo `\(B\)` (pois é mais _verosimil_ que `\(x \in B\)`)
+
+--
+
+- Se `\(\lambda(x) = 1\)`, podemos decidir de forma aleatória
+
+
+---
+
+## Intuição
+
+Seja `\(X_A \sim N(-3, 2)\)` e `\(X_B \sim N(3, 2)\)`. Qual grupo atribuiríamos às seguintes observações?
+
+- `\(x = -0.3\)`
+- `\(x = 1\)`
+- `\(x = 0\)`
+
+--
+
+
+```r
+lambda1 = dnorm(-0.3, mean = -3, sd = 2)/dnorm(-0.3, mean = 3, sd = 2)
+lambda1
+```
+
+```
+## [1] 1.568312
+```
+
+--
+
+
+```r
+lambda2 = dnorm(1, mean = -3, sd = 2)/dnorm(1, mean = 3, sd = 2)
+lambda2
+```
+
+```
+## [1] 0.2231302
+```
+
+--
+
+
+```r
+lambda3 = dnorm(0, mean = -3, sd = 2)/dnorm(0, mean = 3, sd = 2)
+lambda3
+```
+
+```
+## [1] 1
+```
+
+
+
+---
+
+## Intuição
+
+Se fizermos `$$-2 \ln (\lambda(x)) = \dfrac{1}{\sigma^2} \Big[(x-\mu_A)^2 - (x-\mu_B)^2 \Big],$$`
+
+--
+
+
+.pull-left[
+- `\(x\)` é classificado no grupo `\(A\)`, se `$$-2 \ln(\lambda(x)) &lt; 0 \quad \equiv \quad (x-\mu_A)^2 &lt; (x-\mu_B)^2$$`
+- `\(x\)` é classificado no grupo `\(B\)`, se `$$-2 \ln(\lambda(x)) &gt; 0 \quad \equiv \quad (x-\mu_A)^2 &gt; (x-\mu_B)^2$$`
+- A decisão é aleatória se `$$-2 \ln(\lambda(x)) = 0  \quad \equiv \quad (x-\mu_A)^2 = (x-\mu_B)^2$$`
+]
+
+--
+
+
+.pull-right[
+![brain+exploding](https://media1.giphy.com/media/2rqEdFfkMzXmo/giphy.gif) 
+]
+
+
+
+---
+class: inverse, right, middle
+# Análise discriminante linear
+---
+
+
+## Análise discriminante linear
+
+- Suponha que temos `\(k &gt; 2\)` grupos.
+
+--
+
+- Fazer `\(\lambda(x)\)` começa a ficar dificil
+
+--
+
+- Mas podemos tentar manter a mesma ideia, ou seja, atribuir `\(x\)` ao grupo que seja mais verosimil de pertencer, _i.e_ `$$x \in k, \text{ se }\dfrac{f_k(x)}{\displaystyle \sum_{i=1}^k f_i(x)} &gt; \dfrac{f_j(x)}{\displaystyle \sum_{i=1}^k f_i(x)} \quad \forall j \neq k$$`
+
+--
+
+- Agora imagine que, além disso, temos _opiniões a priori_ sobre nossa clasificação e que essas _opiniões a priori_ são representadas como probabilidades iniciais (ou _a priori_) `\(\pi_1, \ldots, \pi_k\)` 
+
+
+---
+
+
+## Análise discriminante linear
+
+
+#### O Teorema de Bayes
+
+`$$P(Y = k | X = x) = \dfrac{P(Y= k, X = x)}{P(X = x)} = \dfrac{P(X = x|Y=k) \times P(Y=k)}{P(X=x)} = \dfrac{f_k(x) \pi_k}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i }$$`
+Ou seja, `\(x \in k, \text{ se }\dfrac{f_k(x)\pi_k}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i} &gt; \dfrac{f_j(x)\pi_j}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i} \quad \forall j \neq k\)`
+
+--
+
+Se `\(f_k(\cdot)\)` for `\(N(\mu_k, \sigma)\)`, pode-se provar que `\(x \in k \text{ se } \delta_k(x) &gt; \delta_j(x) \quad \forall  j \neq k\)` em que `$$\delta_k(x) = x \dfrac{\mu_k}{\sigma^2} - \dfrac{\mu_k^2}{2\sigma^2} + \log(\pi_k)$$`
+
+
+---
+
+## Análise discriminante linear
+
+
+
+.pull-left[
+
+Na prática nunca conhecemos `\(\mu_1, \ldots, \mu_k\)` nem `\(\sigma\)`
+
+
+
+![sad](https://media4.giphy.com/media/3o6wrebnKWmvx4ZBio/giphy.gif)  
+
+
+]
+
+--
+
+.pull-right[
+**Mas podemos estimar esses parâmetros!!!**
+
+`$$\hat{\mu}_k = \displaystyle \sum_{i: y_i = k} \dfrac{x_k}{n_k},$$`
+
+`$$\hat{\sigma}^2 = \displaystyle \sum_{k=1}^K \sum_{i: y_i = k} \dfrac{(x_i - \hat{\mu}_k)^2}{n-K},$$`
+
+A falta de outras informações, podemos utilizar: 
+`$$\hat{\pi}_k = \dfrac{n_k}{n}$$`
+]
+
+--
+
+&gt; A mesma ideia serve para `\(X = (X_1, \cdots, X_p)\)`, mas em lugar de trabalhar `\(N(\mu, \sigma)\)`, trabaharemos com `\(N_p({\mu}, \Sigma)\)` (distribuição Normal multivariada) e nossa regra de classificação 
+
+---
+class: inverse, right, middle
+# Análise discriminante linear no R
+---
+
+
+# Análise discriminante linear no R
+
+
+.pull-left[
+
+![madagascar](https://media3.giphy.com/media/Ch31IjylFWM8M/giphy.gif)  
+
+
+]
+
+.pull-right[
+O _dataset_ `penguins` do pacote `palmerpenguins` contém informaçõa de 344 pinguins. Queremos construimos um modelo preditivo que, dadas algumas caracteristicas dos pinguins, classifique eles segundo sua espécie.
+]
+
+
+
+
+
+
+---
+
+
+# Análise discriminante linear no R
+
+
+.panelset[
+
+.panel[.panel-name[Importando os dados]
+
+```r
+#install.packages("palmerpenguins")
+library(palmerpenguins)
+head(penguins)
+```
+
+```
+## # A tibble: 6 x 8
+##   species island bill_length_mm bill_depth_mm flipper_length_… body_mass_g sex  
+##   &lt;fct&gt;   &lt;fct&gt;           &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt; &lt;fct&gt;
+## 1 Adelie  Torge…           39.1          18.7              181        3750 male 
+## 2 Adelie  Torge…           39.5          17.4              186        3800 fema…
+## 3 Adelie  Torge…           40.3          18                195        3250 fema…
+## 4 Adelie  Torge…           NA            NA                 NA          NA &lt;NA&gt; 
+## 5 Adelie  Torge…           36.7          19.3              193        3450 fema…
+## 6 Adelie  Torge…           39.3          20.6              190        3650 male 
+## # … with 1 more variable: year &lt;int&gt;
+```
+]
+
+.panel[.panel-name[Splitting data]
+
+
+```r
+library(rsample)
+set.seed(321) 
+data_split &lt;- initial_split(penguins, prop = 3/4, strata = species)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+```
+]
+
+.panel[.panel-name[LDA]
+
+```r
+library(MASS)
+model &lt;- lda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g, 
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+str(yhat)
+```
+
+```
+## List of 3
+##  $ class    : Factor w/ 3 levels "Adelie","Chinstrap",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ posterior: num [1:86, 1:3] 0.999 1 1 1 1 ...
+##   ..- attr(*, "dimnames")=List of 2
+##   .. ..$ : chr [1:86] "1" "2" "3" "4" ...
+##   .. ..$ : chr [1:3] "Adelie" "Chinstrap" "Gentoo"
+##  $ x        : num [1:86, 1:2] -2.44 -4.47 -5.62 -4.2 -2.93 ...
+##   ..- attr(*, "dimnames")=List of 2
+##   .. ..$ : chr [1:86] "1" "2" "3" "4" ...
+##   .. ..$ : chr [1:2] "LD1" "LD2"
+```
+]
+
+.panel[.panel-name[Evaluate]
+
+```r
+table(test_data$species,yhat$class)
+```
+
+```
+##            
+##             Adelie Chinstrap Gentoo
+##   Adelie        37         1      0
+##   Chinstrap      0        17      0
+##   Gentoo         0         0     31
+```
+]
+]
+
+
+
+---
+
+## Regressão Logística no R
+
+
+```r
+library(palmerpenguins)
+library(rsample)
+library(MASS)
+head(penguins)
+set.seed(321) 
+data_split &lt;- initial_split(penguins, prop = 3/4, strata = species)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+model &lt;- lda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g, 
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+table(test_data$species,yhat$class)
+```
+
+#### .red[Hands-on:]
+
+Repita a mesma análise, mas dessa vez incluindo também as variáveis `island` e `sex`.
+
+<div class="countdown" id="timer_60f1bf01" style="right:0;bottom:0;" data-warnwhen="0">
+<code class="countdown-time"><span class="countdown-digits minutes">03</span><span class="countdown-digits colon">:</span><span class="countdown-digits seconds">00</span></code>
+</div>
+
+
+---
+class: inverse, right, middle
+# Análise discriminante quadrática 
+---
+
+
+# Análise discriminante quadrática 
+
+
+.panelset[
+
+.panel[.panel-name[QDA]
+
+- LDA, assume que a matriz de covariância de todos os grupos é a mesma, uma hipótese que pode não ser verdade
+- QDA relaxa essa suposição e constroi uma regra de classificação sem precisar supor que as matrices de covariância são iguais
+]
+
+.panel[.panel-name[R Code]
+
+
+```r
+set.seed(321) 
+data_split &lt;- initial_split(penguins, prop = 3/4, strata = species)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+*model &lt;- qda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g,
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+table(test_data$species,yhat$class)
+```
+
+```
+##            
+##             Adelie Chinstrap Gentoo
+##   Adelie        36         2      0
+##   Chinstrap      0        17      0
+##   Gentoo         0         0     31
+```
+]
+]
+
+
+
+
+---
+
+
+## Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Compare os resultados da classificação utilizando os métodos já aprendidos (knn, regressão logística, LDA, QDA)
+- Ainda existem outros métodos de classificação, mas com os que conhecemos já temos bastantes ferramentes para abordar problemas de classificação.
+- Existem muitos dados na internet então... pratique, pratique e pratique!.
+- Modelos matematicamente mais sofisticados, não necessáriamente vão funcionar melhor que modelso mais simples. 
+- Modelos são construiodos sob um conjunto de hipóteses, ignorar-las pode nos levar a uma queda na performance do modelo. 
+
+
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 3
+- Mingoti, S. A. (2007). Análise de dados através de métodos de estatística multivariada: Uma abordagem aplicada. Editora UFMG.
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

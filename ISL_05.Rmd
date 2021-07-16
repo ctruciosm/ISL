@@ -1,0 +1,399 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Classification Part II: Análise Discriminante"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+
+## Intuição
+
+Sejam as seguintes variáveis aleatórias $X_A \sim N(\mu_A, \sigma)$  e  $X_B \sim N(\mu_B,\sigma)$
+
+--
+
+```{r, echo = FALSE}
+library(ggplot2)
+x = seq(-10,10,by=0.1)
+y1 = dnorm(x, mean = -2.7, sd = 1.7)
+y2 = dnorm(x, mean = 2.7, sd = 1.7)
+dados = data.frame(x,y1,y2)
+ggplot(dados) + geom_line(aes(x,y1), color = "red") +
+  geom_line(aes(x,y2), color = "blue") + 
+  ylab("f(x)")
+```
+
+---
+
+## Intuição
+
+O que fizemos intuitivamente é atribuir $x$ ao grupo que consideramos, $x$ seja mais [_verosimil_](https://www.lexico.pt/verosimil/) de pertencer.
+
+--
+
+
+### Razão de verosimilhança
+
+
+$$\lambda(x) = \dfrac{f_A(x)}{f_B(x)} = \dfrac{\dfrac{1}{\sqrt{2\pi} \sigma} exp \Big(- \dfrac{1}{2} \Big(\dfrac{x-\mu_A}{\sigma} \Big)^2 \Big)}{\dfrac{1}{\sqrt{2\pi} \sigma} exp \Big(- \dfrac{1}{2} \Big(\dfrac{x-\mu_B}{2\sigma} \Big)^2 \Big)}$$
+
+--
+
+- Se $\lambda(x) > 1$, $x$ é classificado no grupo $A$ (pois é mais _verosimil_ que $x \in A$)
+
+--
+
+- Se $\lambda(x) < 1$, $x$ é classificado no grupo $B$ (pois é mais _verosimil_ que $x \in B$)
+
+--
+
+- Se $\lambda(x) = 1$, podemos decidir de forma aleatória
+
+
+---
+
+## Intuição
+
+Seja $X_A \sim N(-3, 2)$ e $X_B \sim N(3, 2)$. Qual grupo atribuiríamos às seguintes observações?
+
+- $x = -0.3$
+- $x = 1$
+- $x = 0$
+
+--
+
+```{r}
+lambda1 = dnorm(-0.3, mean = -3, sd = 2)/dnorm(-0.3, mean = 3, sd = 2)
+lambda1
+```
+
+--
+
+```{r}
+lambda2 = dnorm(1, mean = -3, sd = 2)/dnorm(1, mean = 3, sd = 2)
+lambda2
+```
+
+--
+
+```{r}
+lambda3 = dnorm(0, mean = -3, sd = 2)/dnorm(0, mean = 3, sd = 2)
+lambda3
+```
+
+
+
+---
+
+## Intuição
+
+Se fizermos $$-2 \ln (\lambda(x)) = \dfrac{1}{\sigma^2} \Big[(x-\mu_A)^2 - (x-\mu_B)^2 \Big],$$
+
+--
+
+
+.pull-left[
+- $x$ é classificado no grupo $A$, se $$-2 \ln(\lambda(x)) < 0 \quad \equiv \quad (x-\mu_A)^2 < (x-\mu_B)^2$$
+- $x$ é classificado no grupo $B$, se $$-2 \ln(\lambda(x)) > 0 \quad \equiv \quad (x-\mu_A)^2 > (x-\mu_B)^2$$
+- A decisão é aleatória se $$-2 \ln(\lambda(x)) = 0  \quad \equiv \quad (x-\mu_A)^2 = (x-\mu_B)^2$$
+]
+
+--
+
+
+.pull-right[
+![brain+exploding](https://media1.giphy.com/media/2rqEdFfkMzXmo/giphy.gif) 
+]
+
+
+
+---
+class: inverse, right, middle
+# Análise discriminante linear
+---
+
+
+## Análise discriminante linear
+
+- Suponha que temos $k > 2$ grupos.
+
+--
+
+- Fazer $\lambda(x)$ começa a ficar dificil
+
+--
+
+- Mas podemos tentar manter a mesma ideia, ou seja, atribuir $x$ ao grupo que seja mais verosimil de pertencer, _i.e_ $$x \in k, \text{ se }\dfrac{f_k(x)}{\displaystyle \sum_{i=1}^k f_i(x)} > \dfrac{f_j(x)}{\displaystyle \sum_{i=1}^k f_i(x)} \quad \forall j \neq k$$
+
+--
+
+- Agora imagine que, além disso, temos _opiniões a priori_ sobre nossa clasificação e que essas _opiniões a priori_ são representadas como probabilidades iniciais (ou _a priori_) $\pi_1, \ldots, \pi_k$ 
+
+
+---
+
+
+## Análise discriminante linear
+
+
+#### O Teorema de Bayes
+
+$$P(Y = k | X = x) = \dfrac{P(Y= k, X = x)}{P(X = x)} = \dfrac{P(X = x|Y=k) \times P(Y=k)}{P(X=x)} = \dfrac{f_k(x) \pi_k}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i }$$
+Ou seja, $x \in k, \text{ se }\dfrac{f_k(x)\pi_k}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i} > \dfrac{f_j(x)\pi_j}{\displaystyle \sum_{i=1}^k f_i(x)\pi_i} \quad \forall j \neq k$
+
+--
+
+Se $f_k(\cdot)$ for $N(\mu_k, \sigma)$, pode-se provar que $x \in k \text{ se } \delta_k(x) > \delta_j(x) \quad \forall  j \neq k$ em que $$\delta_k(x) = x \dfrac{\mu_k}{\sigma^2} - \dfrac{\mu_k^2}{2\sigma^2} + \log(\pi_k)$$
+
+
+---
+
+## Análise discriminante linear
+
+
+
+.pull-left[
+
+Na prática nunca conhecemos $\mu_1, \ldots, \mu_k$ nem $\sigma$
+
+
+
+![sad](https://media4.giphy.com/media/3o6wrebnKWmvx4ZBio/giphy.gif)  
+
+
+]
+
+--
+
+.pull-right[
+**Mas podemos estimar esses parâmetros!!!**
+
+$$\hat{\mu}_k = \displaystyle \sum_{i: y_i = k} \dfrac{x_k}{n_k},$$
+
+$$\hat{\sigma}^2 = \displaystyle \sum_{k=1}^K \sum_{i: y_i = k} \dfrac{(x_i - \hat{\mu}_k)^2}{n-K},$$
+
+A falta de outras informações, podemos utilizar: 
+$$\hat{\pi}_k = \dfrac{n_k}{n}$$
+]
+
+--
+
+> A mesma ideia serve para $X = (X_1, \cdots, X_p)$, mas em lugar de trabalhar $N(\mu, \sigma)$, trabaharemos com $N_p({\mu}, \Sigma)$ (distribuição Normal multivariada) e nossa regra de classificação 
+
+---
+class: inverse, right, middle
+# Análise discriminante linear no R
+---
+
+
+# Análise discriminante linear no R
+
+
+.pull-left[
+
+![madagascar](https://media3.giphy.com/media/Ch31IjylFWM8M/giphy.gif)  
+
+
+]
+
+.pull-right[
+O _dataset_ `penguins` do pacote `palmerpenguins` contém informaçõa de 344 pinguins. Queremos construimos um modelo preditivo que, dadas algumas caracteristicas dos pinguins, classifique eles segundo sua espécie.
+]
+
+
+
+
+
+
+---
+
+
+# Análise discriminante linear no R
+
+
+.panelset[
+
+.panel[.panel-name[Importando os dados]
+```{r}
+#install.packages("palmerpenguins")
+library(palmerpenguins)
+head(penguins)
+```
+]
+
+.panel[.panel-name[Splitting data]
+
+```{r}
+library(rsample)
+set.seed(321) 
+data_split <- initial_split(penguins, prop = 3/4, strata = species)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+```
+]
+
+.panel[.panel-name[LDA]
+```{r}
+library(MASS)
+model <- lda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g, 
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+str(yhat)
+```
+]
+
+.panel[.panel-name[Evaluate]
+```{r}
+table(test_data$species,yhat$class)
+```
+]
+]
+
+
+
+---
+
+## Regressão Logística no R
+
+```{r, eval=FALSE}
+library(palmerpenguins)
+library(rsample)
+library(MASS)
+head(penguins)
+set.seed(321) 
+data_split <- initial_split(penguins, prop = 3/4, strata = species)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+model <- lda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g, 
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+table(test_data$species,yhat$class)
+```
+
+#### .red[Hands-on:]
+
+Repita a mesma análise, mas dessa vez incluindo também as variáveis `island` e `sex`.
+
+```{r, echo = FALSE}
+library(countdown)
+countdown(minutes = 3, seconds = 0, bottom = 0)
+```
+
+
+---
+class: inverse, right, middle
+# Análise discriminante quadrática 
+---
+
+
+# Análise discriminante quadrática 
+
+
+.panelset[
+
+.panel[.panel-name[QDA]
+
+- LDA, assume que a matriz de covariância de todos os grupos é a mesma, uma hipótese que pode não ser verdade
+- QDA relaxa essa suposição e constroi uma regra de classificação sem precisar supor que as matrices de covariância são iguais
+]
+
+.panel[.panel-name[R Code]
+
+```{r}
+set.seed(321) 
+data_split <- initial_split(penguins, prop = 3/4, strata = species)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+model <- qda(species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g,  #<<
+             data = train_data)
+yhat = predict(model, newdata = test_data)
+table(test_data$species,yhat$class)
+```
+]
+]
+
+
+
+
+---
+
+
+## Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Compare os resultados da classificação utilizando os métodos já aprendidos (knn, regressão logística, LDA, QDA)
+- Ainda existem outros métodos de classificação, mas com os que conhecemos já temos bastantes ferramentes para abordar problemas de classificação.
+- Existem muitos dados na internet então... pratique, pratique e pratique!.
+- Modelos matematicamente mais sofisticados, não necessáriamente vão funcionar melhor que modelso mais simples. 
+- Modelos são construiodos sob um conjunto de hipóteses, ignorar-las pode nos levar a uma queda na performance do modelo. 
+
+
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 3
+- Mingoti, S. A. (2007). Análise de dados através de métodos de estatística multivariada: Uma abordagem aplicada. Editora UFMG.
+
