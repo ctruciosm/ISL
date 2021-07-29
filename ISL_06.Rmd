@@ -1,0 +1,449 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Resampling Methods I: Cross-Validation"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+
+# Motivação
+
+
+- .blue[**No mundo ideal, gostaríamos treinar nosso modelo utilizando todo nosso conjunto de dados e avaliar sua performance com um novo _dataset_.**]
+
+--
+
+- Na prática, não temos esse outro (novo) conjunto de dados e precisamos de algumas técnicas para estimar a performance do modelo antes de colocá-lo _em produção_.
+
+--
+
+- Para lidar com este problema, utilizamos métodos de reamostragem ( _resampling methods_ ).
+
+--
+
+- Esses métodos podem ser classificados em: _Cross-Validation_ e _Bootstrap_.
+
+--
+
+- Entre as técnicas de _Cross-Validation_, temos:
+  * Validation Set Approach
+  * Leave-One-Out Cross-Validation
+  * k-fold Cross-Validation
+  
+---
+class: inverse, right, middle
+# Validation Set Approach
+---
+
+# Validation Set Approach
+
+- Dividimos aleatoriamente o conjunto de dados em dois parte: dados de treinamento e dados de validação (também chamados dados de teste). 
+
+--
+
+- Ajustamos (treinamos) o modelo utilizando os dados de treinamento e avaliamos seu desempenho nos dados de teste (que são dados que o modelo treinado não conhece)
+
+--
+
+- O desempenho obtido com os dados de teste, fornece uma estimativa do desempenho que o modelo terá em um novo _dataset_
+
+--
+
+- .green[Isto é feito facilmente utilizando as funções `initial_split()`, `training()` and `testing()` do pacote `rsample`]
+
+--
+
+**Exemplo:**
+
+```{r, eval = FALSE}
+library(rsample)
+split_data <- initial_split(data = full_dataset, prop = 3/4, strata = variavel_y)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+```
+
+---
+
+# Validation Set Approach
+
+**Case:**
+
+O conjunto de dados `credit_data` do pacote `modeldata` contém 4454 informações sobre clientes de um determinado banco, incluindo a variável `Status` que nos diz se o cliente é um bom (good) ou mau (bad) pagador. 
+
+Fazer um modelo preditivo que nos ajude a classificar se um novo cliente será um bom ou mau pagador. 
+
+Qual é a performance estimada (taxa de observações corretamente classificadas) do modelo quando tivermos um _dataset_ com novas observações?
+
+--
+
+```{r}
+library(dplyr)
+library(rsample)
+data("credit_data", package = "modeldata")
+credit_data <- credit_data %>% na.omit()
+split_data <- initial_split(data = credit_data, prop = 3/4, strata = Status)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+```
+
+
+---
+
+# Validation Set Approach
+
+
+
+.panelset[
+
+.panel[.panel-name[KNN]
+```{r}
+library(tidymodels)
+library(kknn)
+model_spec <- nearest_neighbor(neighbors = 5) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_fit <- model_spec %>% 
+             fit(Status ~ ., data = train_data)
+yhat <- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+]
+
+.panel[.panel-name[Reg. Logistica]
+```{r}
+library(tidymodels)
+model_spec <- logistic_reg() %>% 
+              set_engine("glm") %>% 
+              set_mode("classification") 
+model_fit <- model_spec %>% 
+             fit(Status ~ ., data = train_data)
+yhat <- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+]
+
+.panel[.panel-name[ADL]
+```{r}
+library(tidymodels)
+library(discrim)
+model_spec <- discrim_linear() %>%
+              set_engine("MASS") %>%
+              set_mode("classification") 
+model_fit <- model_spec %>% 
+             fit(Status ~ ., data = train_data)
+yhat <- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+]
+
+.panel[.panel-name[ADQ]
+```{r}
+library(tidymodels)
+library(discrim)
+model_spec <- discrim_quad() %>%
+              set_engine("MASS") %>%
+              set_mode("classification") 
+model_fit <- model_spec %>% 
+             fit(Status ~ ., data = train_data)
+yhat <- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+]
+
+]
+
+
+---
+
+# Validation Set Approach
+
+### Fraquezas do método:
+
+- O valor estimado da performance do modelo (neste caso, a taxa de observações corretamente classificadas) pode variar muito dependendo de qusis observações estão no treinamento e quais no teste.
+
+--
+
+- Se tivermos poucas observações, utilizaremos muito poucas observações para treinar o modelo (ou seja, o modelo aprenderá com um subconjunto menor de observações) o que pode subestimar o desempenho estimado do modelo (taxa de observações corretamente classificadas).
+
+--
+
+- Uma alternativa a este método é o Leave-One-Out Cross-Validation.
+
+
+---
+class: inverse, right, middle
+# Leave-One-Out Cross-Validation
+---
+
+# Leave-One-Out Cross-Validation
+
+- O método é muito parecido com o anterior, mas tenta superar as fraquezas observadas pelo _Validation Set Approach_.
+
+--
+
+- Dividimos o _dataset_ em dois partes: treinamento (com $n-1$ observações) e teste (com apenas 1 observação).
+
+--
+
+- O método é aplicado $n$-vezes (em cada vez, o modelo é treinado utilizando $n-1$ observações e avaliado utilizando uma única observação).
+
+--
+
+- A performance estimada do modelo é calculada como a média das performances obtidas em cada uma das $n$-vezes.
+
+--
+
+
+$$CV_{(n)} = \dfrac{1}{n}\displaystyle \sum_{i=1}^n \text{Medida de Performance}_i$$
+
+--
+
+
+- .green[Isto é feito com a função `loo_cv()` do pacote `rsample`]
+
+
+---
+
+# Leave-One-Out Cross-Validation
+
+Voltando ao case do _dataset_ `credit_data` do pacote `modeldata`.
+
+Por enquanto, não existe uma forma direta (se alguém souber, eu agradeço) de fazer isto com `tidymodels` mas podemos utilizar um `for` e resolver o problema de forma fácil.
+
+
+```{r, eval=FALSE}
+n = nrow(credit_data)
+salvar_performance = c()
+model_spec <- logistic_reg() %>% 
+              set_engine("glm") %>% 
+              set_mode("classification") 
+for (i in 1:n){
+  model_fit <- model_spec %>% 
+               fit(Status ~ ., data = credit_data[-i,])
+  yhat <- predict(model_fit, new_data = credit_data[i,])
+  salvar_performance[i] = accuracy_vec(yhat$.pred_class, credit_data$Status[i])
+}
+mean(salvar_performance)
+# 0.808616
+```
+
+> O grande problema do método Leave-One-Out é que demora **MUITO**. 
+
+
+---
+class: inverse, right, middle
+# k-Fold Cross-Validation
+---
+
+# k-Fold Cross-Validation
+
+- Nasce como uma alternativa ao _Leave-One-Out Cross-Validation._
+
+--
+
+- É computacionalmente menos caro.
+
+--
+
+- É o método de validação cruzada mais utilizado
+
+--
+
+### Como funciona?
+
+- Dividimos o _dataset_ em $k$-grupos (_folds_) do mesmo tamanho.
+
+--
+
+- Ajustamos (treinamos) o modelo $k$-vezes. Em cada vez, escolhemos um grupo para ser utilizado como dados de teste, e treinamos o modelo com os restantes $k-1$ grupos.
+
+--
+
+- A performance estimada do modelo é calculada como a média das performances obtidas em cada uma das $k$-vezes.
+
+--
+
+
+$$CV_{(k)} = \dfrac{1}{k}\displaystyle \sum_{i=1}^k \text{Medida de Performance}_i$$
+
+
+---
+
+# k-Fold Cross-Validation
+
+
+k-fold Cross-Validation é feito utilizando as funções `vfold_cv()`,  `fit_resamples` entre outras do pacote `tidymodels`
+
+--
+
+
+```{r}
+library(tidymodels)  
+folds <- vfold_cv(credit_data, v = 10)
+folds
+```
+
+
+
+---
+
+# k-Fold Cross-Validation
+
+.panelset[
+
+.panel[.panel-name[KNN]
+```{r}
+library(tidymodels)
+library(kknn)
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- nearest_neighbor(neighbors = 5) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+
+.panel[.panel-name[Reg. Logistica]
+```{r}
+library(tidymodels)
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- logistic_reg() %>% 
+              set_engine("glm") %>% 
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+
+.panel[.panel-name[ADL]
+```{r}
+library(tidymodels)
+library(discrim)
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- discrim_linear() %>%
+              set_engine("MASS") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+
+.panel[.panel-name[ADQ]
+```{r}
+library(tidymodels)
+library(discrim)
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- discrim_quad() %>%
+              set_engine("MASS") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% 
+                fit_resamples(folds)
+
+collect_metrics(model_fit_rs)
+```
+]
+]
+
+---
+
+## Validation Set vs. Leave-One-Out vs. k-fold
+
+
+
+---
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Aqui temos focado em um exemplo de classificação, mas as mesmas ideias são utilizadas em problemas de regressão.
+- Existem várias métricas para avaliar a performance do modelo. Alguns post que achei interessantes são  [este](https://www.justintodata.com/machine-learning-model-evaluation-metrics/) e [este outro](https://docs.microsoft.com/en-us/azure/machine-learning/studio-module-reference/evaluate-model)
+- O pacote `tidymodels` fornece muitas opções interessantes para _machine/statistical learning_, vale a pena estudar mais um pouco.
+
+.center[ 
+### Aprendam mais sobre como utilizar o tidymodels [aqui](https://www.tidymodels.org/start/)]
+
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 5
+
+

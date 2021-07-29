@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-07-29" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"da2358f8022b410a9e59fe12a446d02d","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Resampling Methods I: Cross-Validation
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-07-29
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+# Motivação
+
+
+- .blue[**No mundo ideal, gostaríamos treinar nosso modelo utilizando todo nosso conjunto de dados e avaliar sua performance com um novo _dataset_.**]
+
+--
+
+- Na prática, não temos esse outro (novo) conjunto de dados e precisamos de algumas técnicas para estimar a performance do modelo antes de colocá-lo _em produção_.
+
+--
+
+- Para lidar com este problema, utilizamos métodos de reamostragem ( _resampling methods_ ).
+
+--
+
+- Esses métodos podem ser classificados em: _Cross-Validation_ e _Bootstrap_.
+
+--
+
+- Entre as técnicas de _Cross-Validation_, temos:
+  * Validation Set Approach
+  * Leave-One-Out Cross-Validation
+  * k-fold Cross-Validation
+  
+---
+class: inverse, right, middle
+# Validation Set Approach
+---
+
+# Validation Set Approach
+
+- Dividimos aleatoriamente o conjunto de dados em dois parte: dados de treinamento e dados de validação (também chamados dados de teste). 
+
+--
+
+- Ajustamos (treinamos) o modelo utilizando os dados de treinamento e avaliamos seu desempenho nos dados de teste (que são dados que o modelo treinado não conhece)
+
+--
+
+- O desempenho obtido com os dados de teste, fornece uma estimativa do desempenho que o modelo terá em um novo _dataset_
+
+--
+
+- .green[Isto é feito facilmente utilizando as funções `initial_split()`, `training()` and `testing()` do pacote `rsample`]
+
+--
+
+**Exemplo:**
+
+
+```r
+library(rsample)
+split_data &lt;- initial_split(data = full_dataset, prop = 3/4, strata = variavel_y)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+```
+
+---
+
+# Validation Set Approach
+
+**Case:**
+
+O conjunto de dados `credit_data` do pacote `modeldata` contém 4454 informações sobre clientes de um determinado banco, incluindo a variável `Status` que nos diz se o cliente é um bom (good) ou mau (bad) pagador. 
+
+Fazer um modelo preditivo que nos ajude a classificar se um novo cliente será um bom ou mau pagador. 
+
+Qual é a performance estimada (taxa de observações corretamente classificadas) do modelo quando tivermos um _dataset_ com novas observações?
+
+--
+
+
+```r
+library(dplyr)
+library(rsample)
+data("credit_data", package = "modeldata")
+credit_data &lt;- credit_data %&gt;% na.omit()
+split_data &lt;- initial_split(data = credit_data, prop = 3/4, strata = Status)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+```
+
+
+---
+
+# Validation Set Approach
+
+
+
+.panelset[
+
+.panel[.panel-name[KNN]
+
+```r
+library(tidymodels)
+library(kknn)
+model_spec &lt;- nearest_neighbor(neighbors = 5) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_fit &lt;- model_spec %&gt;% 
+             fit(Status ~ ., data = train_data)
+yhat &lt;- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+
+```
+## [1] 0.7556874
+```
+]
+
+.panel[.panel-name[Reg. Logistica]
+
+```r
+library(tidymodels)
+model_spec &lt;- logistic_reg() %&gt;% 
+              set_engine("glm") %&gt;% 
+              set_mode("classification") 
+model_fit &lt;- model_spec %&gt;% 
+             fit(Status ~ ., data = train_data)
+yhat &lt;- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+
+```
+## [1] 0.8041543
+```
+]
+
+.panel[.panel-name[ADL]
+
+```r
+library(tidymodels)
+library(discrim)
+model_spec &lt;- discrim_linear() %&gt;%
+              set_engine("MASS") %&gt;%
+              set_mode("classification") 
+model_fit &lt;- model_spec %&gt;% 
+             fit(Status ~ ., data = train_data)
+yhat &lt;- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+
+```
+## [1] 0.7942631
+```
+]
+
+.panel[.panel-name[ADQ]
+
+```r
+library(tidymodels)
+library(discrim)
+model_spec &lt;- discrim_quad() %&gt;%
+              set_engine("MASS") %&gt;%
+              set_mode("classification") 
+model_fit &lt;- model_spec %&gt;% 
+             fit(Status ~ ., data = train_data)
+yhat &lt;- predict(model_fit, new_data = test_data)
+accuracy_vec(yhat$.pred_class, test_data$Status)
+```
+
+```
+## [1] 0.760633
+```
+]
+
+]
+
+
+---
+
+# Validation Set Approach
+
+### Fraquezas do método:
+
+- O valor estimado da performance do modelo (neste caso, a taxa de observações corretamente classificadas) pode variar muito dependendo de qusis observações estão no treinamento e quais no teste.
+
+--
+
+- Se tivermos poucas observações, utilizaremos muito poucas observações para treinar o modelo (ou seja, o modelo aprenderá com um subconjunto menor de observações) o que pode subestimar o desempenho estimado do modelo (taxa de observações corretamente classificadas).
+
+--
+
+- Uma alternativa a este método é o Leave-One-Out Cross-Validation.
+
+
+---
+class: inverse, right, middle
+# Leave-One-Out Cross-Validation
+---
+
+# Leave-One-Out Cross-Validation
+
+- O método é muito parecido com o anterior, mas tenta superar as fraquezas observadas pelo _Validation Set Approach_.
+
+--
+
+- Dividimos o _dataset_ em dois partes: treinamento (com `\(n-1\)` observações) e teste (com apenas 1 observação).
+
+--
+
+- O método é aplicado `\(n\)`-vezes (em cada vez, o modelo é treinado utilizando `\(n-1\)` observações e avaliado utilizando uma única observação).
+
+--
+
+- A performance estimada do modelo é calculada como a média das performances obtidas em cada uma das `\(n\)`-vezes.
+
+--
+
+
+`$$CV_{(n)} = \dfrac{1}{n}\displaystyle \sum_{i=1}^n \text{Medida de Performance}_i$$`
+
+--
+
+
+- .green[Isto é feito com a função `loo_cv()` do pacote `rsample`]
+
+
+---
+
+# Leave-One-Out Cross-Validation
+
+Voltando ao case do _dataset_ `credit_data` do pacote `modeldata`.
+
+Por enquanto, não existe uma forma direta (se alguém souber, eu agradeço) de fazer isto com `tidymodels` mas podemos utilizar um `for` e resolver o problema de forma fácil.
+
+
+
+```r
+n = nrow(credit_data)
+salvar_performance = c()
+model_spec &lt;- logistic_reg() %&gt;% 
+              set_engine("glm") %&gt;% 
+              set_mode("classification") 
+for (i in 1:n){
+  model_fit &lt;- model_spec %&gt;% 
+               fit(Status ~ ., data = credit_data[-i,])
+  yhat &lt;- predict(model_fit, new_data = credit_data[i,])
+  salvar_performance[i] = accuracy_vec(yhat$.pred_class, credit_data$Status[i])
+}
+mean(salvar_performance)
+# 0.808616
+```
+
+&gt; O grande problema do método Leave-One-Out é que demora **MUITO**. 
+
+
+---
+class: inverse, right, middle
+# k-Fold Cross-Validation
+---
+
+# k-Fold Cross-Validation
+
+- Nasce como uma alternativa ao _Leave-One-Out Cross-Validation._
+
+--
+
+- É computacionalmente menos caro.
+
+--
+
+- É o método de validação cruzada mais utilizado
+
+--
+
+### Como funciona?
+
+- Dividimos o _dataset_ em `\(k\)`-grupos (_folds_) do mesmo tamanho.
+
+--
+
+- Ajustamos (treinamos) o modelo `\(k\)`-vezes. Em cada vez, escolhemos um grupo para ser utilizado como dados de teste, e treinamos o modelo com os restantes `\(k-1\)` grupos.
+
+--
+
+- A performance estimada do modelo é calculada como a média das performances obtidas em cada uma das `\(k\)`-vezes.
+
+--
+
+
+`$$CV_{(k)} = \dfrac{1}{k}\displaystyle \sum_{i=1}^k \text{Medida de Performance}_i$$`
+
+
+---
+
+# k-Fold Cross-Validation
+
+
+k-fold Cross-Validation é feito utilizando as funções `vfold_cv()`,  `fit_resamples` entre outras do pacote `tidymodels`
+
+--
+
+
+
+```r
+library(tidymodels)  
+folds &lt;- vfold_cv(credit_data, v = 10)
+folds
+```
+
+```
+## #  10-fold cross-validation 
+## # A tibble: 10 × 2
+##    splits             id    
+##    &lt;list&gt;             &lt;chr&gt; 
+##  1 &lt;split [3635/404]&gt; Fold01
+##  2 &lt;split [3635/404]&gt; Fold02
+##  3 &lt;split [3635/404]&gt; Fold03
+##  4 &lt;split [3635/404]&gt; Fold04
+##  5 &lt;split [3635/404]&gt; Fold05
+##  6 &lt;split [3635/404]&gt; Fold06
+##  7 &lt;split [3635/404]&gt; Fold07
+##  8 &lt;split [3635/404]&gt; Fold08
+##  9 &lt;split [3635/404]&gt; Fold09
+## 10 &lt;split [3636/403]&gt; Fold10
+```
+
+
+
+---
+
+# k-Fold Cross-Validation
+
+.panelset[
+
+.panel[.panel-name[KNN]
+
+```r
+library(tidymodels)
+library(kknn)
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- nearest_neighbor(neighbors = 5) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.754    10 0.00522 Preprocessor1_Model1
+## 2 roc_auc  binary     0.734    10 0.00921 Preprocessor1_Model1
+```
+]
+
+.panel[.panel-name[Reg. Logistica]
+
+```r
+library(tidymodels)
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- logistic_reg() %&gt;% 
+              set_engine("glm") %&gt;% 
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.809    10 0.00659 Preprocessor1_Model1
+## 2 roc_auc  binary     0.833    10 0.00796 Preprocessor1_Model1
+```
+]
+
+.panel[.panel-name[ADL]
+
+```r
+library(tidymodels)
+library(discrim)
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- discrim_linear() %&gt;%
+              set_engine("MASS") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% 
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.803    10 0.00855 Preprocessor1_Model1
+## 2 roc_auc  binary     0.829    10 0.00871 Preprocessor1_Model1
+```
+]
+
+.panel[.panel-name[ADQ]
+
+```r
+library(tidymodels)
+library(discrim)
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- discrim_quad() %&gt;%
+              set_engine("MASS") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% 
+                fit_resamples(folds)
+
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.759    10 0.00724 Preprocessor1_Model1
+## 2 roc_auc  binary     0.774    10 0.0122  Preprocessor1_Model1
+```
+]
+]
+
+---
+
+## Validation Set vs. Leave-One-Out vs. k-fold
+
+
+
+---
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Aqui temos focado em um exemplo de classificação, mas as mesmas ideias são utilizadas em problemas de regressão.
+- Existem várias métricas para avaliar a performance do modelo. Alguns post que achei interessantes são  [este](https://www.justintodata.com/machine-learning-model-evaluation-metrics/) e [este outro](https://docs.microsoft.com/en-us/azure/machine-learning/studio-module-reference/evaluate-model)
+- O pacote `tidymodels` fornece muitas opções interessantes para _machine/statistical learning_, vale a pena estudar mais um pouco.
+
+.center[ 
+### Aprendam mais sobre como utilizar o tidymodels [aqui](https://www.tidymodels.org/start/)]
+
+
+]
+
+
+---
+
+## Referências:
+
+ 
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 5
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
