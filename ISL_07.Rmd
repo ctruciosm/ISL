@@ -1,0 +1,397 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Resampling Methods II: Tuning Hyperparameters"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+
+# Motivação
+
+.panelset[
+.panel[.panel-name[Importando Dados]
+```{r}
+# Pacotes necessários
+library(dplyr)
+library(tidymodels)
+library(kknn)
+data("credit_data", package = "modeldata")
+credit_data <- credit_data %>% na.omit()
+```
+]
+.panel[.panel-name[K = 1]
+```{r}
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- nearest_neighbor(neighbors = 1) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[K = 3]
+```{r}
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- nearest_neighbor(neighbors = 3) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[K = 5]
+```{r}
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- nearest_neighbor(neighbors = 5) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[K = 10]
+```{r}
+folds <- vfold_cv(credit_data, v = 10)
+model_spec <- nearest_neighbor(neighbors = 10) %>%
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+]
+
+
+---
+
+# Motivação
+
+- O método _KNN_ precisa que o usuário atribua um valor do número de vizinhos a serem utilizados.
+- Esse parâmetro $k$ é chamado de _hiperparâmetro_.
+- Diferentes valores de $k$ leverão a diferentes performances na amostra de teste (ou seja, diferentes valores estimados do desempenho do modelo). 
+- O processo para escolher o _melhor valor de k_ é chamando de "Tunar o parâmetro" e será feito também com _Cross-Validation_
+
+
+---
+class: inverse, right, middle
+# Tuning Hyperparameters
+---
+
+# Tuning Hyperparameters
+
+
+.panelset[
+.panel[.panel-name[Código]
+```{r, eval = FALSE}
+folds <- vfold_cv(credit_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% #<<
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_regular(neighbors(), levels = 5) #<<
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_res <- model_wf %>% 
+             tune_grid(resamples = folds, grid = model_grid) #<<
+collect_metrics(model_res)
+```
+]
+
+.panel[.panel-name[Resultado]
+```{r, echo = FALSE}
+folds <- vfold_cv(credit_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% #<<
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_regular(neighbors(), levels = 5)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_res <- model_wf %>% 
+             tune_grid(resamples = folds, grid = model_grid)
+collect_metrics(model_res)
+```
+]
+]
+
+--
+
+> Achou alguma coisa estranha no processo de "tunar o parâmetro"?
+
+
+
+---
+
+# Tuning Hyperparameters
+
+
+> Utilizamos os dados de teste para escolher o **melhor valor de $k$!!!** ou sejá não temos mais um conjunto de observações (não observadas pelo modelo treinado) onde poderiamos verificar que tão bom é nosso modelo. 
+
+--
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+Os dados de teste simulam aqueles dados novos que chegarão no futuro (os quais o modelo nunca viu). Eles **nunca** devem ser utilizados para alguma coisa a não ser avaliar a performance do nosso modelo. Se utilizarmos os dados de teste para escolher o hiperparâmetro, na verdade esses dados de teste viraram dados de treinamento.
+]
+
+--
+
+**O que fazer?**
+
+---
+
+# Tuning Hyperparameters
+
+
+.panelset[
+.panel[.panel-name[Código]
+```{r,eval = FALSE}
+data_split <- initial_split(credit_data, prop = 3/4, strata = Status) #<<
+train_data <- training(data_split) #<<
+test_data <- testing(data_split) #<<
+hyper_folds <- vfold_cv(train_data, strata = Status) #<<
+model_spec <- nearest_neighbor(neighbors = tune()) %>% 
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_regular(neighbors(), levels = 5)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_res <- model_wf %>% 
+             tune_grid(resamples = hyper_folds, grid = model_grid)
+collect_metrics(model_res)
+```
+]
+
+.panel[.panel-name[Resultado]
+```{r, echo = FALSE}
+data_split <- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+hyper_folds <- vfold_cv(train_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% 
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_regular(neighbors(),
+                           levels = 5)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_res <- model_wf %>% 
+             tune_grid(resamples = hyper_folds, grid = model_grid)
+collect_metrics(model_res)
+```
+]
+
+.panel[.panel-name[Melhor modelo]
+```{r}
+model_res %>% show_best("accuracy", 2)
+best_model <- model_res %>% select_best("accuracy")
+best_model
+final_wf <- model_wf %>% finalize_workflow(best_model)
+```
+]
+
+.panel[.panel-name[Modelo Final]
+```{r}
+folds <- vfold_cv(credit_data, strata = Status, v = 10)
+model_fit_rs <- final_wf %>% # Já contem os "melhores" valores dos hiperparâmeros
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+]
+
+---
+
+# Tuning Hyperparameters
+
+- Até agora temos utilizado `grid_regular(levels = n)` para escolher o melhor $k$.
+- `grid_regular(levels = n)` testa `n` diferentes valores para o número de vizinhos (entre valores mínimos e máximos pre-estabelecidos) de forma que os diferentes valores sejam espaçados de forma aproximadamente igual.
+- Outra forma de grid bastante popular é `grid_random(size = n)` (escolhe o número de vizinhos de forma aleatória).
+- Existem otras formas de grid que também estão disponíveis como `grid_max_entropy()` e `grid_latin_hypercube()`.
+
+
+--
+
+### Hands-on:
+
+1. Substitua `grid_regular(neighbors(), levels = 5)` por `grid_random(neighbors(), size = 5)`, o que observa?
+2. O que você espera que acontece se fizer `grid_regular(neighbors(), levels = 15)` ou `grid_random(neighbors(), size = 15)`. 
+3. Faça as mudanças no código para incluir alguma das opções no item 2. O que aconteceu?
+
+
+---
+
+
+# Tuning Hyperparameters
+
+```{r,eval = FALSE}
+data_split <- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+folds <- vfold_cv(train_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% 
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_regular(neighbors(), levels = 5)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .)
+model_res <- model_wf %>% 
+             tune_grid(resamples = folds,grid = model_grid)
+collect_metrics(model_res)
+```
+
+1. Substitua `grid_regular(neighbors(), levels = 5)` por `grid_random(neighbors(), size = 5)`, o que observa?
+2. O que você espera que acontece se fizer `grid_regular(neighbors(), levels = 15)` ou `grid_random(neighbors(), size = 15)`. 
+3. Faça as mudanças no código para incluir alguma das opções no item 2. O que aconteceu?
+
+
+---
+
+
+# Tuning Hyperparameters
+
+Por padrão, os valores máximos e mínimos dos hiperparâmetros já estão pre-estabelecidos, más é possivel mudar esse valores.
+
+.panelset[
+.panel[.panel-name[Código]
+```{r,eval = FALSE}
+data_split <- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+folds <- vfold_cv(train_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% 
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_random(neighbors(c(1, 50)),  #<<
+                          size = 15)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .) 
+model_res <- model_wf %>% 
+             tune_grid(resamples = folds,grid = model_grid)
+model_res %>% show_best("accuracy",5)
+```
+]
+.panel[.panel-name[Resultado]
+```{r, echo = FALSE}
+data_split <- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+folds <- vfold_cv(train_data, strata = Status)
+model_spec <- nearest_neighbor(neighbors = tune()) %>% 
+              set_engine("kknn") %>%
+              set_mode("classification") 
+model_grid <- grid_random(neighbors(c(1, 50)),  #<<
+                          size = 15)
+model_wf <- workflow() %>%
+            add_model(model_spec) %>%
+            add_formula(Status ~ .) 
+model_res <- model_wf %>% 
+             tune_grid(resamples = folds,grid = model_grid)
+model_res %>% show_best("accuracy",5)
+```
+]
+]
+
+
+---
+
+
+# Tuning Hyperparameters
+
+- O processo de "tunar parâmetros" não e exclussivo do _KNN_, vários métodos precisam da escolha dos hiperparâmetros, mas o processo é semelhante ao visto aqui.
+- Nas próximas reuniões, quando necessário, utilizaremos o processo de "tunar parâmetros" para escolher nosso modelo.
+
+> Tunar parâmetros pode ser um processo caro computacionalmente. Quanto temos vários parâmetros a serem tunados e um número grande de `levels` ou `size`, computadores de alto desempenho são necessários. 
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Aqui temos "tunado o parâmetro" para obter a maior acurácia, mas lembre-se: existem várias métricas para avaliar a performance do modelo. 
+- O melhor valor do hiperparâmetro segundo uma métrica (eg. acurácia) não necessáriamente será o melhor valor segundo outra métrica.
+- Estude o pacote `tidymodels`, fornece muitas opções interessantes para _machine/statistical learning_. Confira [aqui](https://www.tidymodels.org/start/) o material introdutório elaborado pelos próprios criadores do pacote.
+- Um material mais completo sobre `tidymodels` pode ser encontrado [aqui](https://www.tmwr.org).
+
+
+**Happy Coding!**
+
+]
+
+
+

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-08-13" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"a745e4b2786743f7b496e920e0948845","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Resampling Methods II: Tuning Hyperparameters
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-08-13
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+# Motivação
+
+.panelset[
+.panel[.panel-name[Importando Dados]
+
+```r
+# Pacotes necessários
+library(dplyr)
+library(tidymodels)
+library(kknn)
+data("credit_data", package = "modeldata")
+credit_data &lt;- credit_data %&gt;% na.omit()
+```
+]
+.panel[.panel-name[K = 1]
+
+```r
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- nearest_neighbor(neighbors = 1) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.731    10 0.00597 Preprocessor1_Model1
+## 2 roc_auc  binary     0.641    10 0.00749 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[K = 3]
+
+```r
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- nearest_neighbor(neighbors = 3) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.730    10 0.00668 Preprocessor1_Model1
+## 2 roc_auc  binary     0.717    10 0.00718 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[K = 5]
+
+```r
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- nearest_neighbor(neighbors = 5) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.756    10 0.00479 Preprocessor1_Model1
+## 2 roc_auc  binary     0.738    10 0.00803 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[K = 10]
+
+```r
+folds &lt;- vfold_cv(credit_data, v = 10)
+model_spec &lt;- nearest_neighbor(neighbors = 10) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.770    10 0.00632 Preprocessor1_Model1
+## 2 roc_auc  binary     0.758    10 0.00903 Preprocessor1_Model1
+```
+]
+]
+
+
+---
+
+# Motivação
+
+- O método _KNN_ precisa que o usuário atribua um valor do número de vizinhos a serem utilizados.
+- Esse parâmetro `\(k\)` é chamado de _hiperparâmetro_.
+- Diferentes valores de `\(k\)` leverão a diferentes performances na amostra de teste (ou seja, diferentes valores estimados do desempenho do modelo). 
+- O processo para escolher o _melhor valor de k_ é chamando de "Tunar o parâmetro" e será feito também com _Cross-Validation_
+
+
+---
+class: inverse, right, middle
+# Tuning Hyperparameters
+---
+
+# Tuning Hyperparameters
+
+
+.panelset[
+.panel[.panel-name[Código]
+
+```r
+folds &lt;- vfold_cv(credit_data, strata = Status)
+*model_spec &lt;- nearest_neighbor(neighbors = tune()) %&gt;%
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+*model_grid &lt;- grid_regular(neighbors(), levels = 5)
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_res &lt;- model_wf %&gt;% 
+*            tune_grid(resamples = folds, grid = model_grid)
+collect_metrics(model_res)
+```
+]
+
+.panel[.panel-name[Resultado]
+
+```
+## # A tibble: 10 × 7
+##    neighbors .metric  .estimator  mean     n std_err .config             
+##        &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+##  1         1 accuracy binary     0.732    10 0.00738 Preprocessor1_Model1
+##  2         1 roc_auc  binary     0.640    10 0.00893 Preprocessor1_Model1
+##  3         3 accuracy binary     0.733    10 0.00732 Preprocessor1_Model2
+##  4         3 roc_auc  binary     0.716    10 0.0101  Preprocessor1_Model2
+##  5         5 accuracy binary     0.757    10 0.00617 Preprocessor1_Model3
+##  6         5 roc_auc  binary     0.737    10 0.00923 Preprocessor1_Model3
+##  7         7 accuracy binary     0.759    10 0.00640 Preprocessor1_Model4
+##  8         7 roc_auc  binary     0.751    10 0.00938 Preprocessor1_Model4
+##  9        10 accuracy binary     0.771    10 0.00471 Preprocessor1_Model5
+## 10        10 roc_auc  binary     0.763    10 0.00929 Preprocessor1_Model5
+```
+]
+]
+
+--
+
+&gt; Achou alguma coisa estranha no processo de "tunar o parâmetro"?
+
+
+
+---
+
+# Tuning Hyperparameters
+
+
+&gt; Utilizamos os dados de teste para escolher o **melhor valor de `\(k\)`!!!** ou sejá não temos mais um conjunto de observações (não observadas pelo modelo treinado) onde poderiamos verificar que tão bom é nosso modelo. 
+
+--
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+Os dados de teste simulam aqueles dados novos que chegarão no futuro (os quais o modelo nunca viu). Eles **nunca** devem ser utilizados para alguma coisa a não ser avaliar a performance do nosso modelo. Se utilizarmos os dados de teste para escolher o hiperparâmetro, na verdade esses dados de teste viraram dados de treinamento.
+]
+
+--
+
+**O que fazer?**
+
+---
+
+# Tuning Hyperparameters
+
+
+.panelset[
+.panel[.panel-name[Código]
+
+```r
+*data_split &lt;- initial_split(credit_data, prop = 3/4, strata = Status)
+*train_data &lt;- training(data_split)
+*test_data &lt;- testing(data_split)
+*hyper_folds &lt;- vfold_cv(train_data, strata = Status)
+model_spec &lt;- nearest_neighbor(neighbors = tune()) %&gt;% 
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_grid &lt;- grid_regular(neighbors(), levels = 5)
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_res &lt;- model_wf %&gt;% 
+             tune_grid(resamples = hyper_folds, grid = model_grid)
+collect_metrics(model_res)
+```
+]
+
+.panel[.panel-name[Resultado]
+
+```
+## # A tibble: 10 × 7
+##    neighbors .metric  .estimator  mean     n std_err .config             
+##        &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+##  1         1 accuracy binary     0.713    10 0.00664 Preprocessor1_Model1
+##  2         1 roc_auc  binary     0.616    10 0.00993 Preprocessor1_Model1
+##  3         3 accuracy binary     0.713    10 0.00664 Preprocessor1_Model2
+##  4         3 roc_auc  binary     0.700    10 0.00659 Preprocessor1_Model2
+##  5         5 accuracy binary     0.741    10 0.00439 Preprocessor1_Model3
+##  6         5 roc_auc  binary     0.718    10 0.00610 Preprocessor1_Model3
+##  7         7 accuracy binary     0.748    10 0.00392 Preprocessor1_Model4
+##  8         7 roc_auc  binary     0.730    10 0.00632 Preprocessor1_Model4
+##  9        10 accuracy binary     0.761    10 0.00334 Preprocessor1_Model5
+## 10        10 roc_auc  binary     0.743    10 0.00556 Preprocessor1_Model5
+```
+]
+
+.panel[.panel-name[Melhor modelo]
+
+```r
+model_res %&gt;% show_best("accuracy", 2)
+```
+
+```
+## # A tibble: 2 × 7
+##   neighbors .metric  .estimator  mean     n std_err .config             
+##       &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1        10 accuracy binary     0.761    10 0.00334 Preprocessor1_Model5
+## 2         7 accuracy binary     0.748    10 0.00392 Preprocessor1_Model4
+```
+
+```r
+best_model &lt;- model_res %&gt;% select_best("accuracy")
+best_model
+```
+
+```
+## # A tibble: 1 × 2
+##   neighbors .config             
+##       &lt;int&gt; &lt;chr&gt;               
+## 1        10 Preprocessor1_Model5
+```
+
+```r
+final_wf &lt;- model_wf %&gt;% finalize_workflow(best_model)
+```
+]
+
+.panel[.panel-name[Modelo Final]
+
+```r
+folds &lt;- vfold_cv(credit_data, strata = Status, v = 10)
+model_fit_rs &lt;- final_wf %&gt;% # Já contem os "melhores" valores dos hiperparâmeros
+                fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.771    10 0.00667 Preprocessor1_Model1
+## 2 roc_auc  binary     0.766    10 0.0119  Preprocessor1_Model1
+```
+]
+]
+
+---
+
+# Tuning Hyperparameters
+
+- Até agora temos utilizado `grid_regular(levels = n)` para escolher o melhor `\(k\)`.
+- `grid_regular(levels = n)` testa `n` diferentes valores para o número de vizinhos (entre valores mínimos e máximos pre-estabelecidos) de forma que os diferentes valores sejam espaçados de forma aproximadamente igual.
+- Outra forma de grid bastante popular é `grid_random(size = n)` (escolhe o número de vizinhos de forma aleatória).
+- Existem otras formas de grid que também estão disponíveis como `grid_max_entropy()` e `grid_latin_hypercube()`.
+
+
+--
+
+### Hands-on:
+
+1. Substitua `grid_regular(neighbors(), levels = 5)` por `grid_random(neighbors(), size = 5)`, o que observa?
+2. O que você espera que acontece se fizer `grid_regular(neighbors(), levels = 15)` ou `grid_random(neighbors(), size = 15)`. 
+3. Faça as mudanças no código para incluir alguma das opções no item 2. O que aconteceu?
+
+
+---
+
+
+# Tuning Hyperparameters
+
+
+```r
+data_split &lt;- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+folds &lt;- vfold_cv(train_data, strata = Status)
+model_spec &lt;- nearest_neighbor(neighbors = tune()) %&gt;% 
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+model_grid &lt;- grid_regular(neighbors(), levels = 5)
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .)
+model_res &lt;- model_wf %&gt;% 
+             tune_grid(resamples = folds,grid = model_grid)
+collect_metrics(model_res)
+```
+
+1. Substitua `grid_regular(neighbors(), levels = 5)` por `grid_random(neighbors(), size = 5)`, o que observa?
+2. O que você espera que acontece se fizer `grid_regular(neighbors(), levels = 15)` ou `grid_random(neighbors(), size = 15)`. 
+3. Faça as mudanças no código para incluir alguma das opções no item 2. O que aconteceu?
+
+
+---
+
+
+# Tuning Hyperparameters
+
+Por padrão, os valores máximos e mínimos dos hiperparâmetros já estão pre-estabelecidos, más é possivel mudar esse valores.
+
+.panelset[
+.panel[.panel-name[Código]
+
+```r
+data_split &lt;- initial_split(credit_data, prop = 3/4, strata = Status)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+folds &lt;- vfold_cv(train_data, strata = Status)
+model_spec &lt;- nearest_neighbor(neighbors = tune()) %&gt;% 
+              set_engine("kknn") %&gt;%
+              set_mode("classification") 
+*model_grid &lt;- grid_random(neighbors(c(1, 50)),
+                          size = 15)
+model_wf &lt;- workflow() %&gt;%
+            add_model(model_spec) %&gt;%
+            add_formula(Status ~ .) 
+model_res &lt;- model_wf %&gt;% 
+             tune_grid(resamples = folds,grid = model_grid)
+model_res %&gt;% show_best("accuracy",5)
+```
+]
+.panel[.panel-name[Resultado]
+
+```
+## # A tibble: 5 × 7
+##   neighbors .metric  .estimator  mean     n std_err .config              
+##       &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
+## 1        22 accuracy binary     0.790    10 0.00415 Preprocessor1_Model07
+## 2        19 accuracy binary     0.788    10 0.00453 Preprocessor1_Model06
+## 3        29 accuracy binary     0.787    10 0.00460 Preprocessor1_Model08
+## 4        32 accuracy binary     0.786    10 0.00465 Preprocessor1_Model09
+## 5        41 accuracy binary     0.785    10 0.00481 Preprocessor1_Model10
+```
+]
+]
+
+
+---
+
+
+# Tuning Hyperparameters
+
+- O processo de "tunar parâmetros" não e exclussivo do _KNN_, vários métodos precisam da escolha dos hiperparâmetros, mas o processo é semelhante ao visto aqui.
+- Nas próximas reuniões, quando necessário, utilizaremos o processo de "tunar parâmetros" para escolher nosso modelo.
+
+&gt; Tunar parâmetros pode ser um processo caro computacionalmente. Quanto temos vários parâmetros a serem tunados e um número grande de `levels` ou `size`, computadores de alto desempenho são necessários. 
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Aqui temos "tunado o parâmetro" para obter a maior acurácia, mas lembre-se: existem várias métricas para avaliar a performance do modelo. 
+- O melhor valor do hiperparâmetro segundo uma métrica (eg. acurácia) não necessáriamente será o melhor valor segundo outra métrica.
+- Estude o pacote `tidymodels`, fornece muitas opções interessantes para _machine/statistical learning_. Confira [aqui](https://www.tidymodels.org/start/) o material introdutório elaborado pelos próprios criadores do pacote.
+- Um material mais completo sobre `tidymodels` pode ser encontrado [aqui](https://www.tmwr.org).
+
+
+**Happy Coding!**
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
