@@ -368,6 +368,25 @@ model_res %>% show_best("accuracy",5)
 
 > Tunar parâmetros pode ser um processo caro computacionalmente. Quanto temos vários parâmetros a serem tunados e um número grande de `levels` ou `size`, computadores de alto desempenho são necessários. 
 
+---
+
+
+.bg-washed-blue.b--dark-blue.ba.bw2.br3.shadow-5.ph4.mt5[
+### Grupo de pesquisa em Big Data e Análise Quantitativa (BDAQ)
+
+Ná última reunião de Departamento  foi aprovada a criação de um novo grupo de pesquisa na FACC/UFRJ `r emo::ji("dance")` `r emo::ji("teacher")` `r emo::ji("computer")`.
+
+O grupo de pesquisa **Big Data e Análise Quantitativa (BDAQ)** é formado pelos seguintes professores:
+
+- Dr. Carlos César Trucíos Maza,
+- Dra. Cristina Pimenta de Mello Spinet Luz,  
+- Dr. Boris Asrilhant,
+- Dr. Marcelo Castañeda de Araujo,
+- Dra. Laura Marina Valencia Niño
+
+
+Logo logo teremos novidades sobre projetos de pesquisa para trabalharmos com alunos e outros professores `r emo::ji("scientist")` `r emo::ji("student")`. 
+]
 
 
 ---
