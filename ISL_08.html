@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-09-10" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"x6cca136326e4f06b24f150bf03af882","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Seleção de Modelos
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-09-10
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+# Motivação
+
+- Na [reunião número 9](https://ctruciosm.github.io/ISL/ISL_03), falamos sobre regressão linear.
+
+--
+
+- Nos modelos de regressão, estamos interessados em explicar/entender a relação entre uma variável target (também chamada de variável dependente) `\(Y\)` e um conjunto de `\(p\)` variáveis explicativas `\(X_1\)`, `\(X_2\)`, `\(\ldots\)`, `\(X_p\)`.
+
+--
+
+- Assumimos que a relação entre essas variáveis é dada através de `$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$`
+
+--
+
+- Contudo, muitas dúvidas podem surguir quando trabalhamos com modelos de regressão linear:
+  * se tivermos várias variáveis, devemos usar todas ou usar apenas as "melhores"?
+  * será que podemos obter um modelo com um número menor de varáveis sem sacrificar muito a performance do modelo?
+  * o que fazer quando a relação não é linear?
+  
+--
+
+&gt; Esses assuntos serão o foco de discussão nesta e nas próximas reuniões.
+
+
+---
+class: inverse, right, middle
+# Seleção de variáveis
+---
+
+## Seleção de variáveis
+
+- Quando `\(n\)` (o número de observações) é muito maior do que `\(p\)` (o número de variáveis), o método de [mínimo quadrádos ordinários](https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/) funciona muito bem! 🕺
+
+--
+
+&gt; Lembre-se, MQO é o método padrão utilizado para estimar os parâmetros do modelo de regressão linear, ou seja, calcular os `\(\hat{\beta}s\)`.
+
+
+--
+
+- Se `\(n\)` **não for** muito maior do que `\(p\)`, quando utilizarmos o método de mínimos quadrados podemos ter _overfitting_ (ou seja, nosso modelo pode funcionar bem nos dados e treinamento, mas ter um desempenho pobre com os dados de teste). 🤷
+
+--
+
+- Se `\(p\)` &gt; `\(n\)`, não temos mais uma solução unica para os `\(\hat{\beta}s\)` (queremos estimar `\(p\)` parâmetros com apenas `\(n\)` observações. Isso não parece ser muito esperto, né?) 😨
+
+
+---
+
+## Seleção de variáveis
+
+- Por outro lado, quando temos muitas variáveis no modelo, algumas delas podem ajudar em nada a entender/explicar a variável target `\(Y\)`.
+
+--
+
+- Incluir essas variáveis irrelevantes pode causar problemas no modelo de regressão (tais como multicolineariedade), além de aumentar de forma desnecessária a complexidade do modelo.
+
+--
+
+- Remover essas variáveis nos dará um modelo mais fácil de ser interpretado (além de um modelo que funcionará melhor nos dados de teste).
+
+--
+
+&gt; **Menos variáveis podem fazer com o modelo funcione melhor nos dados de teste?** Sim, incluir variáveis irrelevantes nos levará a enxergar padrões onde não há.
+
+--
+
+- Para remover essas variáveis, se obtivermos `\(\hat{\beta} = 0\)` para algumas variáveis, nosso problema estaria resolvido.
+
+--
+
+- Contudo, o método de mínimos quadrados dificilmente nos levara a valores `\(\hat{\beta} = 0\)`. Assim, algumas alternativas para selecionar variáveis são necessários:
+  * Subset (escolher um subconjunto das variáveis)
+  * Shrinkage (encolher os `\(\hat{\beta}s\)` e leva-los a zero).
+  
+---
+class: inverse, right, middle
+# Subset Selection
+---
+
+
+## Subset Selection
+
+.blue[Escolher um subconjunto de variáveis que ajudam explicar melhor a variável target `\(Y\)`]
+
+--
+
+&gt; **Mas como escolher esse subconjunto?** 🤔
+
+--
+
+.pull-left[
+
+Existem várias técnicas para isso:
+
+- Best Subset Selection (escolher o melhor modelo)
+- Stepwise
+  * Forward Stepwise
+  * Backward Stepwise
+  * Hibrido
+
+]
+
+.pull-right[
+![Yes](https://media1.giphy.com/media/hXDrTueJWAscK3xWQ2/giphy.gif)  
+]
+
+
+
+
+
+
+
+
+---
+
+### Best Subset Selection
+
+- Ajustar modelos de regressão separados para cada possível combinação das `\(p\)` variáveis e escolher (segundo algum critério) o melhor modelo. Usalmente o melhor modelo é escolhido em termos do erro quadrático medio (quanto menor, melhor) ou do `\(R^2\)` (quanto maior, melhor).
+
+--
+
+- Como (geralmente) é feito isso?
+  * ajustar um modelo sem nenhuma variável explicativa, `\(y = \beta_0 + u\)`
+  * ajustar `\(p\)` modelos (cada modelo com exatamente uma única variável explicativa) e escolher aquele com menor EQM ou maior `\(R^2\)`,
+  * ajustar um modelo para cada uma das `\(\binom{p}{2}\)` e escolher aquele com menor EQM ou maior `\(R^2\)` nos dados de treinamento,
+  * `\(\ldots\)`
+  * ajustar um modelo para cada uma das `\(\binom{p}{p-1}\)` e escolher aquele com menor EQM ou maior `\(R^2\)` nos dados de treinamento,
+  * ajustar o modelos com todas as `\(p\)` variáveis,
+  * comparar os modelos selecionados (utilizando validação-cruzada) e escolher o modelo que leva a um menor EQM ou maior `\(R^2\)` (ou algum outro critério escolhido).
+  
+  
+--
+
+
+&gt; **O problema é que isso gerará muitos modelos! (além do próprio custo computacional da validação cruzada), tornando essa estratégia impraticável!**
+
+
+---
+class: inverse, right, middle
+# Stepwise Selection
+
+**Stepwise** é um alternativa *esperta/sábia* para não precisar testar todos os possíveis modelos!
+
+---
+
+### Forward Stepwise
+
+1. Denote por `\(M_0\)` o modelo sem variáveis explicativas, `\(y = \beta_0 + u\)`
+2. Para `\(k = 0, \ldots, p-1\)`
+  * Considere todos os `\(p-k\)` modelos que incluem mais uma variável ao `\(M_k\)`
+  * Escolher, entre os `\(p-k\)` modelos, o melhor modelo (aquele com menor EQM ou maior `\(R^2\)`) e denote ele como `\(M_{k+1}\)`
+3. Escolher dente `\(M_0, M_1, \ldots, M_p\)`, utilizando validação-cruzada, o modelo com menos EQM, maior `\(R^2\)` ou algum outro critério.
+
+--
+
+&gt; O método _Best Subset_ implica estimar `\(2^p\)` modelos, enquanto o método _Forward Stepwise_ implica estimar apenas `\(1 +p(p+1)/2\)` modelos!. Isso significa que:
+
+--
+
+
+
+|  p| Best_Subset| Forward_Stepwise|
+|--:|-----------:|----------------:|
+| 10|        1024|               56|
+| 20|     1048576|              211|
+| 30|  1073741824|              466|
+
+--
+
+&gt; Alguns autores utilizam diferentes critérios nos passo 2 e 3, mas a essência do método continua o mesmo.
+
+---
+
+### Forward Stepwise
+
+- Forward Stepwise não está disponível no `tidymodels`.
+- Existemm outros pacotes que podem nos ajudar, mas a implementação não é exatamente a mesma descrita aqui (mas serve)
+
+.panelset[
+.panel[.panel-name[Data]
+
+```r
+library(dplyr)
+glimpse(mtcars)
+```
+
+```
+## Rows: 32
+## Columns: 11
+## $ mpg  &lt;dbl&gt; 21.0, 21.0, 22.8, 21.4, 18.7, 18.1, 14.3, 24.4, 22.8, 19.2, 17.8,…
+## $ cyl  &lt;dbl&gt; 6, 6, 4, 6, 8, 6, 8, 4, 4, 6, 6, 8, 8, 8, 8, 8, 8, 4, 4, 4, 4, 8,…
+## $ disp &lt;dbl&gt; 160.0, 160.0, 108.0, 258.0, 360.0, 225.0, 360.0, 146.7, 140.8, 16…
+## $ hp   &lt;dbl&gt; 110, 110, 93, 110, 175, 105, 245, 62, 95, 123, 123, 180, 180, 180…
+## $ drat &lt;dbl&gt; 3.90, 3.90, 3.85, 3.08, 3.15, 2.76, 3.21, 3.69, 3.92, 3.92, 3.92,…
+## $ wt   &lt;dbl&gt; 2.620, 2.875, 2.320, 3.215, 3.440, 3.460, 3.570, 3.190, 3.150, 3.…
+## $ qsec &lt;dbl&gt; 16.46, 17.02, 18.61, 19.44, 17.02, 20.22, 15.84, 20.00, 22.90, 18…
+## $ vs   &lt;dbl&gt; 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0,…
+## $ am   &lt;dbl&gt; 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0,…
+## $ gear &lt;dbl&gt; 4, 4, 4, 3, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3, 3,…
+## $ carb &lt;dbl&gt; 4, 4, 1, 1, 2, 1, 4, 2, 2, 4, 4, 3, 3, 3, 4, 4, 4, 1, 2, 1, 1, 2,…
+```
+]
+.panel[.panel-name[Slipt Data]
+
+```r
+library(rsample)
+set.seed(123) 
+data_split &lt;- initial_split(mtcars)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+```
+]
+.panel[.panel-name[Forward Stepwise]
+
+```r
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial &lt;- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final &lt;- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+forward &lt;- stats::step(modelo_inicial, direction = 'forward',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+forward
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ cyl + wt + carb, data = train_data)
+## 
+## Coefficients:
+## (Intercept)          cyl           wt         carb  
+##     40.9457      -1.5833      -2.9876      -0.4904
+```
+]
+
+.panel[.panel-name[Modelo final]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+
+```r
+library(tidymodels)
+set.seed(246)
+folds &lt;- vfold_cv(mtcars, v = 10)
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_wf &lt;- workflow() %&gt;% add_model(model_spec) %&gt;% add_formula(formula(forward))
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   2.42     10  0.361  Preprocessor1_Model1
+## 2 rsq     standard   0.805    10  0.0880 Preprocessor1_Model1
+```
+]
+]
+
+---
+
+### Backward Stepwise
+
+
+1. Denote por `\(M_p\)` o modelo com todas as variáveis explicativas, 
+2. Para `\(k = p, p-1, \ldots, 1\)`
+  * Considere os `\(k\)` modelos que tem todas as variáveis utilizadas em `\(M_k\)` mas tirando uma delas.
+  * Escolher, entre os `\(k\)` modelos, o melhor modelo (aquele com menor EQM ou maior `\(R^2\)`) e denote ele como `\(M_{k-1}\)`
+3. Escolher dente `\(M_0, M_1, \ldots, M_p\)`, utilizando validação-cruzada, o modelo com menos EQM, maior `\(R^2\)` ou algum outro critério.
+
+--
+
+&gt; Alguns autores utilizam diferentes critérios nos passo 2 e 3, mas a essência do método continua o mesmo.
+
+
+--
+
+Exista ainda o método híbrido, que mistura o _Forward Stepwise_ e o _Backward Stepwise_
+
+---
+
+### Backward Stepwise
+
+Backward Stepwise não está disponível no `tidymodels`.
+
+.panelset[
+.panel[.panel-name[Backward]
+
+```r
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial &lt;- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final &lt;- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+backward &lt;- stats::step(modelo_final, direction = 'backward',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+backward
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ cyl + wt, data = train_data)
+## 
+## Coefficients:
+## (Intercept)          cyl           wt  
+##      41.117       -1.812       -3.055
+```
+]
+
+.panel[.panel-name[Hybrid]
+
+```r
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial &lt;- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final &lt;- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+hybrid &lt;- stats::step(modelo_inicial, direction = 'both',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+hybrid
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ cyl + wt + carb, data = train_data)
+## 
+## Coefficients:
+## (Intercept)          cyl           wt         carb  
+##     40.9457      -1.5833      -2.9876      -0.4904
+```
+]
+
+.panel[.panel-name[Modelo final Backward]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+
+```r
+library(tidymodels)
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_wf &lt;- workflow() %&gt;% add_model(model_spec) %&gt;%
+* add_formula(formula(backward))
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   2.49     10   0.332 Preprocessor1_Model1
+## 2 rsq     standard   0.746    10   0.112 Preprocessor1_Model1
+```
+]
+
+.panel[.panel-name[Modelo final Hibrido]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+
+```r
+library(tidymodels)
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_wf &lt;- workflow() %&gt;% add_model(model_spec) %&gt;%
+* add_formula(formula(hybrid))
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   2.42     10  0.361  Preprocessor1_Model1
+## 2 rsq     standard   0.805    10  0.0880 Preprocessor1_Model1
+```
+]
+
+.panel[.panel-name[Modelo final full]
+
+```r
+library(tidymodels)
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_wf &lt;- workflow() %&gt;% add_model(model_spec) %&gt;% 
+* add_formula(mpg ~ . )
+model_fit_rs &lt;- model_wf %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator  mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   3.10     10   0.466 Preprocessor1_Model1
+## 2 rsq     standard   0.687    10   0.106 Preprocessor1_Model1
+```
+] 
+]
+
+---
+
+&gt; Os métodos de _Stepwise_, embora úteis, tem sido criticados por sua falta de teoria estatística.
+
+--
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 6
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Além do Erro Quadrático Médio, raíz quadrada do erro quadrático médio (RMSE), `\(R^2\)`, `\(R^2\)`-ajustado, existem outros critérios tais como AIC, BIC, etc. Informe-se sobre esses outros critérios.
+- Estude o pacote `tidymodels`, fornece muitas opções interessantes para _machine/statistical learning_. Confira [aqui](https://www.tidymodels.org/start/) o material introdutório elaborado pelos próprios criadores do pacote.
+- Um material mais completo sobre `tidymodels` pode ser encontrado [aqui](https://www.tmwr.org).
+
+
+**Happy Coding!**
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

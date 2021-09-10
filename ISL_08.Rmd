@@ -1,0 +1,405 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Seleção de Modelos"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+# Motivação
+
+- Na [reunião número 9](https://ctruciosm.github.io/ISL/ISL_03), falamos sobre regressão linear.
+
+--
+
+- Nos modelos de regressão, estamos interessados em explicar/entender a relação entre uma variável target (também chamada de variável dependente) $Y$ e um conjunto de $p$ variáveis explicativas $X_1$, $X_2$, $\ldots$, $X_p$.
+
+--
+
+- Assumimos que a relação entre essas variáveis é dada através de $$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$
+
+--
+
+- Contudo, muitas dúvidas podem surguir quando trabalhamos com modelos de regressão linear:
+  * se tivermos várias variáveis, devemos usar todas ou usar apenas as "melhores"?
+  * será que podemos obter um modelo com um número menor de varáveis sem sacrificar muito a performance do modelo?
+  * o que fazer quando a relação não é linear?
+  
+--
+
+> Esses assuntos serão o foco de discussão nesta e nas próximas reuniões.
+
+
+---
+class: inverse, right, middle
+# Seleção de variáveis
+---
+
+## Seleção de variáveis
+
+- Quando $n$ (o número de observações) é muito maior do que $p$ (o número de variáveis), o método de [mínimo quadrádos ordinários](https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/) funciona muito bem! `r emo::ji("dance")`
+
+--
+
+> Lembre-se, MQO é o método padrão utilizado para estimar os parâmetros do modelo de regressão linear, ou seja, calcular os $\hat{\beta}s$.
+
+
+--
+
+- Se $n$ **não for** muito maior do que $p$, quando utilizarmos o método de mínimos quadrados podemos ter _overfitting_ (ou seja, nosso modelo pode funcionar bem nos dados e treinamento, mas ter um desempenho pobre com os dados de teste). `r emo::ji("doubt")`
+
+--
+
+- Se $p$ > $n$, não temos mais uma solução unica para os $\hat{\beta}s$ (queremos estimar $p$ parâmetros com apenas $n$ observações. Isso não parece ser muito esperto, né?) `r emo::ji("scared")`
+
+
+---
+
+## Seleção de variáveis
+
+- Por outro lado, quando temos muitas variáveis no modelo, algumas delas podem ajudar em nada a entender/explicar a variável target $Y$.
+
+--
+
+- Incluir essas variáveis irrelevantes pode causar problemas no modelo de regressão (tais como multicolineariedade), além de aumentar de forma desnecessária a complexidade do modelo.
+
+--
+
+- Remover essas variáveis nos dará um modelo mais fácil de ser interpretado (além de um modelo que funcionará melhor nos dados de teste).
+
+--
+
+> **Menos variáveis podem fazer com o modelo funcione melhor nos dados de teste?** Sim, incluir variáveis irrelevantes nos levará a enxergar padrões onde não há.
+
+--
+
+- Para remover essas variáveis, se obtivermos $\hat{\beta} = 0$ para algumas variáveis, nosso problema estaria resolvido.
+
+--
+
+- Contudo, o método de mínimos quadrados dificilmente nos levara a valores $\hat{\beta} = 0$. Assim, algumas alternativas para selecionar variáveis são necessários:
+  * Subset (escolher um subconjunto das variáveis)
+  * Shrinkage (encolher os $\hat{\beta}s$ e leva-los a zero).
+  
+---
+class: inverse, right, middle
+# Subset Selection
+---
+
+
+## Subset Selection
+
+.blue[Escolher um subconjunto de variáveis que ajudam explicar melhor a variável target $Y$]
+
+--
+
+> **Mas como escolher esse subconjunto?** `r emo::ji("thinking")`
+
+--
+
+.pull-left[
+
+Existem várias técnicas para isso:
+
+- Best Subset Selection (escolher o melhor modelo)
+- Stepwise
+  * Forward Stepwise
+  * Backward Stepwise
+  * Hibrido
+
+]
+
+.pull-right[
+![Yes](https://media1.giphy.com/media/hXDrTueJWAscK3xWQ2/giphy.gif)  
+]
+
+
+
+
+
+
+
+
+---
+
+### Best Subset Selection
+
+- Ajustar modelos de regressão separados para cada possível combinação das $p$ variáveis e escolher (segundo algum critério) o melhor modelo. Usalmente o melhor modelo é escolhido em termos do erro quadrático medio (quanto menor, melhor) ou do $R^2$ (quanto maior, melhor).
+
+--
+
+- Como (geralmente) é feito isso?
+  * ajustar um modelo sem nenhuma variável explicativa, $y = \beta_0 + u$
+  * ajustar $p$ modelos (cada modelo com exatamente uma única variável explicativa) e escolher aquele com menor EQM ou maior $R^2$,
+  * ajustar um modelo para cada uma das $\binom{p}{2}$ e escolher aquele com menor EQM ou maior $R^2$ nos dados de treinamento,
+  * $\ldots$
+  * ajustar um modelo para cada uma das $\binom{p}{p-1}$ e escolher aquele com menor EQM ou maior $R^2$ nos dados de treinamento,
+  * ajustar o modelos com todas as $p$ variáveis,
+  * comparar os modelos selecionados (utilizando validação-cruzada) e escolher o modelo que leva a um menor EQM ou maior $R^2$ (ou algum outro critério escolhido).
+  
+  
+--
+
+
+> **O problema é que isso gerará muitos modelos! (além do próprio custo computacional da validação cruzada), tornando essa estratégia impraticável!**
+
+
+---
+class: inverse, right, middle
+# Stepwise Selection
+
+**Stepwise** é um alternativa *esperta/sábia* para não precisar testar todos os possíveis modelos!
+
+---
+
+### Forward Stepwise
+
+1. Denote por $M_0$ o modelo sem variáveis explicativas, $y = \beta_0 + u$
+2. Para $k = 0, \ldots, p-1$
+  * Considere todos os $p-k$ modelos que incluem mais uma variável ao $M_k$
+  * Escolher, entre os $p-k$ modelos, o melhor modelo (aquele com menor EQM ou maior $R^2$) e denote ele como $M_{k+1}$
+3. Escolher dente $M_0, M_1, \ldots, M_p$, utilizando validação-cruzada, o modelo com menos EQM, maior $R^2$ ou algum outro critério.
+
+--
+
+> O método _Best Subset_ implica estimar $2^p$ modelos, enquanto o método _Forward Stepwise_ implica estimar apenas $1 +p(p+1)/2$ modelos!. Isso significa que:
+
+--
+
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+library(dplyr)
+p = c(10, 20, 30)
+Best_Subset = 2^p
+Forward_Stepwise = 1 + p*(p + 1)/2
+data.frame(p,Best_Subset, Forward_Stepwise) %>% knitr::kable()
+```
+
+--
+
+> Alguns autores utilizam diferentes critérios nos passo 2 e 3, mas a essência do método continua o mesmo.
+
+---
+
+### Forward Stepwise
+
+- Forward Stepwise não está disponível no `tidymodels`.
+- Existemm outros pacotes que podem nos ajudar, mas a implementação não é exatamente a mesma descrita aqui (mas serve)
+
+.panelset[
+.panel[.panel-name[Data]
+```{r}
+library(dplyr)
+glimpse(mtcars)
+```
+]
+.panel[.panel-name[Slipt Data]
+```{r}
+library(rsample)
+set.seed(123) 
+data_split <- initial_split(mtcars)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+```
+]
+.panel[.panel-name[Forward Stepwise]
+```{r}
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial <- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final <- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+forward <- stats::step(modelo_inicial, direction = 'forward',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+forward
+```
+]
+
+.panel[.panel-name[Modelo final]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+```{r}
+library(tidymodels)
+set.seed(246)
+folds <- vfold_cv(mtcars, v = 10)
+model_spec <- linear_reg() %>% set_engine("lm")
+model_wf <- workflow() %>% add_model(model_spec) %>% add_formula(formula(forward))
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+]
+
+---
+
+### Backward Stepwise
+
+
+1. Denote por $M_p$ o modelo com todas as variáveis explicativas, 
+2. Para $k = p, p-1, \ldots, 1$
+  * Considere os $k$ modelos que tem todas as variáveis utilizadas em $M_k$ mas tirando uma delas.
+  * Escolher, entre os $k$ modelos, o melhor modelo (aquele com menor EQM ou maior $R^2$) e denote ele como $M_{k-1}$
+3. Escolher dente $M_0, M_1, \ldots, M_p$, utilizando validação-cruzada, o modelo com menos EQM, maior $R^2$ ou algum outro critério.
+
+--
+
+> Alguns autores utilizam diferentes critérios nos passo 2 e 3, mas a essência do método continua o mesmo.
+
+
+--
+
+Exista ainda o método híbrido, que mistura o _Forward Stepwise_ e o _Backward Stepwise_
+
+---
+
+### Backward Stepwise
+
+Backward Stepwise não está disponível no `tidymodels`.
+
+.panelset[
+.panel[.panel-name[Backward]
+```{r}
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial <- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final <- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+backward <- stats::step(modelo_final, direction = 'backward',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+backward
+```
+]
+
+.panel[.panel-name[Hybrid]
+```{r}
+# Modelo inicial (apenas com o intercepto)
+modelo_inicial <- lm(mpg ~ 1, data = train_data) 
+# Modelo final (com todas as variáveis)
+modelo_final <- lm(mpg ~ ., data = train_data) 
+# step utiliza AIC  como critério e não faz validação cruzada (usa o train_data todo)
+hybrid <- stats::step(modelo_inicial, direction = 'both',  scope = formula(modelo_final), trace = 0)
+# Os coeficientes do melhor modelo
+hybrid
+```
+]
+
+.panel[.panel-name[Modelo final Backward]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+```{r}
+library(tidymodels)
+model_spec <- linear_reg() %>% set_engine("lm")
+model_wf <- workflow() %>% add_model(model_spec) %>%
+  add_formula(formula(backward)) #<<
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+
+.panel[.panel-name[Modelo final Hibrido]
+Como não precisamos tunar nenhum parâmetro, utilizamos cross-validation no _dataset_ todo para estimar a performance do modelo fora da amostra.
+```{r}
+library(tidymodels)
+model_spec <- linear_reg() %>% set_engine("lm")
+model_wf <- workflow() %>% add_model(model_spec) %>%
+  add_formula(formula(hybrid)) #<<
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+
+.panel[.panel-name[Modelo final full]
+```{r}
+library(tidymodels)
+model_spec <- linear_reg() %>% set_engine("lm")
+model_wf <- workflow() %>% add_model(model_spec) %>% 
+  add_formula(mpg ~ . ) #<<
+model_fit_rs <- model_wf %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+] 
+]
+
+---
+
+> Os métodos de _Stepwise_, embora úteis, tem sido criticados por sua falta de teoria estatística.
+
+--
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 6
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Além do Erro Quadrático Médio, raíz quadrada do erro quadrático médio (RMSE), $R^2$, $R^2$-ajustado, existem outros critérios tais como AIC, BIC, etc. Informe-se sobre esses outros critérios.
+- Estude o pacote `tidymodels`, fornece muitas opções interessantes para _machine/statistical learning_. Confira [aqui](https://www.tidymodels.org/start/) o material introdutório elaborado pelos próprios criadores do pacote.
+- Um material mais completo sobre `tidymodels` pode ser encontrado [aqui](https://www.tmwr.org).
+
+
+**Happy Coding!**
+
+]
+
+
+
