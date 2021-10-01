@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-10-01" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xc58ec2488f2411682084a79fdf2b239","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Regularização
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-10-01
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+# Motivação
+
+`$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$`
+
+--
+
+
+- Na reunião anterior vimos que, quando `\(p \approx n\)`, incluir todas as variáveis explicativas pode não ser uma boa ideia.
+  * pode causar multicolineariedade;
+  * podemos achar padrões que na verdade não existem;
+  * [_Overfitting_](https://en.wikipedia.org/wiki/Overfitting)
+
+--
+
+- Para contornar esse problema, vimos alguns métodos para seleção de variáveis. Em especial, o método _Best Subset_ (não usado na prática devido ao alto custo computacional) e os métodos _Stepwise_:
+  * _Forward Stepwise_ ;
+  * _Backward Stepwise_;
+  * _Hydrid Stepwise_.
+  
+--
+
+.blue[Embora esses métodos sejam úteis, comentamos que, pela falta de teoría estatística envolvida, os métodos _Stepwise_ são criticados.]
+
+--
+
+.red[Aquí veremos algums métodos chamados de `regularização`, que possuem uma teoria estatística mais sólida e também nos ajudam a resolver o problema em questão. Esses métodos são bastante utilizados atualmente.]
+
+
+
+
+---
+class: inverse, right, middle
+# Regularização
+---
+
+
+### Regularização
+
+Utilizaremos métodos que tentam regularizar (encolher para zero) os valores dos `\(\hat{\beta}s\)`. Isto será feito mudando a forma como os `\(\hat{\beta}s\)` são calculados (ou seja, mudando o método como os `\(\beta\)`s são estimados).
+
+--
+
+Seja o modelo `$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$`
+
+Como não conhecemos os `\(\beta\)`s, precisamos estimá-los através dos dados (dando origem aos `\(\hat{\beta}s\)`).
+
+--
+
+- O método "padrão" para estimar os parâmetros é o método de [mínimos quadrados ordinários](https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/) (MQO), que consiste em calcular os `\(b\)`s que minimizam `$$\displaystyle \sum_{i=1}^n (y_i - \hat{y}_i)^2 \equiv \displaystyle \sum_{i=1}^n (y_i - \underbrace{(b_0 + b_1 x_{1,i} + \cdots + b_p x_{p,i})}_{\hat{y}_i})^2.$$` Os `\(b\)`s que miminizam a função serão os `\(\hat{\beta}s\)` (ou seja, todas as variáveis estarão no modelo).
+
+--
+
+MQO tem boas propriedades estatísticas e, sob algumas condições, é o [melhor estimador linear não viesado](https://ctruciosm.github.io/posts/2021-02-28-teorema-de-gauss-markov/). Contudo, dificilmente levará algum `\(\hat{\beta}\)` para zero 😭
+
+
+---
+
+
+### Regressão Ridge
+
+A ideia é modificar o método de MQO para levar alguns dos `\(\hat{\beta}\)` o mais próximo de zero que conseguirmos.
+
+--
+
+Para isto, em lugar de minimizarmos `$$\displaystyle \sum_{i=1}^n (y_i - \underbrace{(b_0 + b_1 x_{1,i} + \cdots + b_p x_{p,i})}_{\hat{y}_i})^2,$$`
+
+
+minimizamos
+
+`$$\displaystyle \sum_{i=1}^n (y_i - b_0 - \sum_{j = 1}^p b_j x_{j,i})^2 + \underbrace{\lambda \sum_{j = 1}^p b_j^2}_{\text{shrinkage penalty}},$$` em que `\(\lambda &gt; 0\)` é chamado _Tunning paramater_ (e pode ser obtido através de [validação cruzada](https://ctruciosm.github.io/ISL/ISL_07)). Ou seja, para um dado `\(\lambda\)`, obtemos os `\(b\)`s que minimizam a função (que serão, então, os `\(\hat{\beta}s\)`).
+
+&gt; Para cada escolha de `\(\lambda\)`, teremos `\(\hat{\beta}s\)` diferentes.
+
+---
+
+
+### Regressão Lasso
+
+Regressão ridge, vai encolher os valores dos `\(\hat{\beta}s\)` para zero, mas eles não serão exatamente zero. Com isso, todos as variáveis serão incluidas no modelo (e ainda será dificil interpretar o modelo).
+
+--
+
+Uma outra abordagem, que é capaz de fazer com que alguns `\(\hat{\beta}s\)` sejam exatamente zero, é a **regressão lasso**.
+
+
+Agora, a função a minimizar é dada por
+
+`$$\displaystyle \sum_{i=1}^n (y_i - b_0 - \sum_{j = 1}^p b_j x_{j,i})^2 + \underbrace{\lambda \sum_{j = 1}^p |b_j|}_{\text{shrinkage penalty}},$$` em que `\(\lambda &gt; 0\)` é chamado _Tunning paramater_ (e pode ser obtido através de [validação cruzada](https://ctruciosm.github.io/ISL/ISL_07)). Ou seja, para um dado `\(\lambda\)`, obtemos os `\(b\)`s que minimizam a função (que serão, então, os `\(\hat{\beta}s\)`).
+
+&gt; A diferença da regressão ridge, a regressão lasso leva alguns dos `\(\hat{\beta}s\)` para exatamente zero, reduzindo o número de variaveis no modelo.
+
+
+---
+
+### Ridge e Lasso
+
+Em ambos os métodos, para um `\(\lambda\)` dado, basta resolver o problema de optimização e assim obter os `\(\hat{\beta}s\)`. Contudo, alguns cuidados precisam ser tomádos quando utilizarmos esses métodos:
+  - precisamos escolher o `melhor` `\(\lambda\)`;
+  - Ridge e Lasso, "encolhem" os valores de `\(\hat{\beta}_1, \ldots, \hat{\beta}_p\)`, mas não exercem nenhuma influência sobre `\(\hat{\beta}_0\)`;
+  - Quando trabalahamos com regressão ridge ou lasso, as variáveis numéricas devem estar padronizadas!;
+  - Como regressão lasso, levar alguns dos `\(\hat{\beta}s\)` para zero, funciona como um seletor de variáveis (escolhe apenas um subconjunto de variáveis, aquelas com `\(\hat{\beta} \neq 0\)`);
+
+--
+
+.pull-left[
+
+#### Regressão por MQO
+
+1. Especificamos o modelo.
+2. Através da validação cruzada estimamos a performance do modelo fora da amostra.
+
+]
+
+--
+
+.pull-right[
+
+#### Ridge/Lasso
+
+0. Padronizamos as variáveis
+1. Especificamos o modelo
+2. Atraves de validação cruzada (apenas com dados de treinamento) escolhemos o melhor `\(\lambda\)`.
+3. Com o `\(\lambda\)` definido e o modelo especificado, fazemos validação cruzada para estimar a performance do modelo fora da amostra.
+
+]
+
+
+  
+
+---
+class: inverse, right, middle
+# Hands-On
+---
+
+
+.panelset[
+.panel[.panel-name[Dados]
+
+```r
+library(dplyr)
+library(rsample)
+library(tidymodels)
+library(glmnet)  # Ridge
+library(ISLR)    # Dataset Hitters
+glimpse(Hitters)
+```
+
+```
+## Rows: 322
+## Columns: 20
+## $ AtBat     &lt;int&gt; 293, 315, 479, 496, 321, 594, 185, 298, 323, 401, 574, 202, …
+## $ Hits      &lt;int&gt; 66, 81, 130, 141, 87, 169, 37, 73, 81, 92, 159, 53, 113, 60,…
+## $ HmRun     &lt;int&gt; 1, 7, 18, 20, 10, 4, 1, 0, 6, 17, 21, 4, 13, 0, 7, 3, 20, 2,…
+## $ Runs      &lt;int&gt; 30, 24, 66, 65, 39, 74, 23, 24, 26, 49, 107, 31, 48, 30, 29,…
+## $ RBI       &lt;int&gt; 29, 38, 72, 78, 42, 51, 8, 24, 32, 66, 75, 26, 61, 11, 27, 1…
+## $ Walks     &lt;int&gt; 14, 39, 76, 37, 30, 35, 21, 7, 8, 65, 59, 27, 47, 22, 30, 11…
+## $ Years     &lt;int&gt; 1, 14, 3, 11, 2, 11, 2, 3, 2, 13, 10, 9, 4, 6, 13, 3, 15, 5,…
+## $ CAtBat    &lt;int&gt; 293, 3449, 1624, 5628, 396, 4408, 214, 509, 341, 5206, 4631,…
+## $ CHits     &lt;int&gt; 66, 835, 457, 1575, 101, 1133, 42, 108, 86, 1332, 1300, 467,…
+## $ CHmRun    &lt;int&gt; 1, 69, 63, 225, 12, 19, 1, 0, 6, 253, 90, 15, 41, 4, 36, 3, …
+## $ CRuns     &lt;int&gt; 30, 321, 224, 828, 48, 501, 30, 41, 32, 784, 702, 192, 205, …
+## $ CRBI      &lt;int&gt; 29, 414, 266, 838, 46, 336, 9, 37, 34, 890, 504, 186, 204, 1…
+## $ CWalks    &lt;int&gt; 14, 375, 263, 354, 33, 194, 24, 12, 8, 866, 488, 161, 203, 2…
+## $ League    &lt;fct&gt; A, N, A, N, N, A, N, A, N, A, A, N, N, A, N, A, N, A, A, N, …
+## $ Division  &lt;fct&gt; E, W, W, E, E, W, E, W, W, E, E, W, E, E, E, W, W, W, W, W, …
+## $ PutOuts   &lt;int&gt; 446, 632, 880, 200, 805, 282, 76, 121, 143, 0, 238, 304, 211…
+## $ Assists   &lt;int&gt; 33, 43, 82, 11, 40, 421, 127, 283, 290, 0, 445, 45, 11, 151,…
+## $ Errors    &lt;int&gt; 20, 10, 14, 3, 4, 25, 7, 9, 19, 0, 22, 11, 7, 6, 8, 0, 10, 1…
+## $ Salary    &lt;dbl&gt; NA, 475.000, 480.000, 500.000, 91.500, 750.000, 70.000, 100.…
+## $ NewLeague &lt;fct&gt; A, N, A, N, N, A, A, A, N, A, A, N, N, A, N, A, N, A, A, N, …
+```
+]
+.panel[.panel-name[MQO]
+
+```r
+Hitters = na.omit(Hitters)
+set.seed(3210)
+folds &lt;- vfold_cv(Hitters, v = 10)
+model_spec &lt;- linear_reg() %&gt;% set_engine("lm")
+model_wflw &lt;- workflow() %&gt;%
+  add_model(model_spec) %&gt;%
+  add_formula(Salary ~ .)
+model_fit_rs &lt;- model_wflw  %&gt;% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator    mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   343.       10 22.9    Preprocessor1_Model1
+## 2 rsq     standard     0.443    10  0.0360 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[Splits]
+
+```r
+# Dividimos train e test
+set.seed(1234)
+split_data &lt;- initial_split(data = Hitters)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+# CV para escolher o melhor lambda
+folds_tung &lt;- vfold_cv(train_data, v = 10)
+```
+]
+.panel[.panel-name[Ridge]
+
+```r
+model_spec &lt;- linear_reg(mixture = 0, penalty = tune()) %&gt;% # mixture = 0 para Ridge
+  set_mode("regression") %&gt;% set_engine("glmnet")
+model_grid &lt;- grid_regular(penalty(range = c(-2, 3)), levels = 50)
+model_reci &lt;- recipe(Salary ~ ., data = train_data) %&gt;%
+  step_novel(all_nominal_predictors()) %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors())
+model_wflw &lt;- workflow() %&gt;%
+  add_recipe(model_reci) %&gt;% add_model(model_spec) 
+model_resp &lt;- model_wflw %&gt;% 
+  tune_grid(resamples = folds_tung, grid = model_grid)
+best_model &lt;- model_resp %&gt;% select_best("rmse")         # Escolhemos o "lambda" que produziu menor rmse
+final_wf &lt;- model_wflw %&gt;% finalize_workflow(best_model) # Definimos o modelo final
+model_fit_rs &lt;- final_wf %&gt;% fit_resamples(folds)        # Treinamos o modelo final
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator    mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   331.       10 31.0    Preprocessor1_Model1
+## 2 rsq     standard     0.469    10  0.0348 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[Gráfico Ridge]
+
+```r
+autoplot(model_resp)
+```
+
+&lt;img src="ISL_09_files/figure-html/unnamed-chunk-5-1.png" width="100%" /&gt;
+]
+
+.panel[.panel-name[Lasso]
+
+```r
+model_spec &lt;- linear_reg(mixture = 1, penalty = tune()) %&gt;%  # misture = 1 para LASSO
+  set_mode("regression") %&gt;% set_engine("glmnet")
+model_grid &lt;- grid_regular(penalty(range = c(-2, 3)), levels = 50)
+model_reci &lt;- recipe(Salary ~ ., data = train_data) %&gt;%
+  step_novel(all_nominal_predictors()) %&gt;% 
+  step_dummy(all_nominal_predictors()) %&gt;% 
+  step_zv(all_predictors()) %&gt;% 
+  step_normalize(all_numeric_predictors())
+model_wflw &lt;- workflow() %&gt;%
+  add_recipe(model_reci) %&gt;% add_model(model_spec) 
+model_resp &lt;- model_wflw %&gt;% 
+  tune_grid(resamples = folds_tung, grid = model_grid)
+best_model &lt;- model_resp %&gt;% select_best("rmse")         # Escolhemos o "lambda" que produziu menor rmse
+final_wf &lt;- model_wflw %&gt;% finalize_workflow(best_model) # Definimos o modelo final
+model_fit_rs &lt;- final_wf %&gt;% fit_resamples(folds)        # Treinamos o modelo final
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator    mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   331.       10 30.7    Preprocessor1_Model1
+## 2 rsq     standard     0.467    10  0.0351 Preprocessor1_Model1
+```
+]
+.panel[.panel-name[Lasso Gráfico]
+
+```r
+autoplot(model_resp)
+```
+
+&lt;img src="ISL_09_files/figure-html/unnamed-chunk-7-1.png" width="100%" /&gt;
+]
+]
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Regressão Ridge e Lasso começam a ser vantajosas quando `\(p\)` é grande ( `\(p \approx n\)` );
+- Para saber se o modelo é melhor que o clássico MQO, é necessário fazer validação-cruzada para avaliar a performance do modelo.
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 6
+
+
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

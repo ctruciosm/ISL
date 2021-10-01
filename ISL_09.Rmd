@@ -1,0 +1,312 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Regularização"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+# Motivação
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$
+
+--
+
+
+- Na reunião anterior vimos que, quando $p \approx n$, incluir todas as variáveis explicativas pode não ser uma boa ideia.
+  * pode causar multicolineariedade;
+  * podemos achar padrões que na verdade não existem;
+  * [_Overfitting_](https://en.wikipedia.org/wiki/Overfitting)
+
+--
+
+- Para contornar esse problema, vimos alguns métodos para seleção de variáveis. Em especial, o método _Best Subset_ (não usado na prática devido ao alto custo computacional) e os métodos _Stepwise_:
+  * _Forward Stepwise_ ;
+  * _Backward Stepwise_;
+  * _Hydrid Stepwise_.
+  
+--
+
+.blue[Embora esses métodos sejam úteis, comentamos que, pela falta de teoría estatística envolvida, os métodos _Stepwise_ são criticados.]
+
+--
+
+.red[Aquí veremos algums métodos chamados de `regularização`, que possuem uma teoria estatística mais sólida e também nos ajudam a resolver o problema em questão. Esses métodos são bastante utilizados atualmente.]
+
+
+
+
+---
+class: inverse, right, middle
+# Regularização
+---
+
+
+### Regularização
+
+Utilizaremos métodos que tentam regularizar (encolher para zero) os valores dos $\hat{\beta}s$. Isto será feito mudando a forma como os $\hat{\beta}s$ são calculados (ou seja, mudando o método como os $\beta$s são estimados).
+
+--
+
+Seja o modelo $$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p + u$$
+
+Como não conhecemos os $\beta$s, precisamos estimá-los através dos dados (dando origem aos $\hat{\beta}s$).
+
+--
+
+- O método "padrão" para estimar os parâmetros é o método de [mínimos quadrados ordinários](https://ctruciosm.github.io/posts/2021-04-01-minimos-quadrados-ordinarios/) (MQO), que consiste em calcular os $b$s que minimizam $$\displaystyle \sum_{i=1}^n (y_i - \hat{y}_i)^2 \equiv \displaystyle \sum_{i=1}^n (y_i - \underbrace{(b_0 + b_1 x_{1,i} + \cdots + b_p x_{p,i})}_{\hat{y}_i})^2.$$ Os $b$s que miminizam a função serão os $\hat{\beta}s$ (ou seja, todas as variáveis estarão no modelo).
+
+--
+
+MQO tem boas propriedades estatísticas e, sob algumas condições, é o [melhor estimador linear não viesado](https://ctruciosm.github.io/posts/2021-02-28-teorema-de-gauss-markov/). Contudo, dificilmente levará algum $\hat{\beta}$ para zero `r emo::ji("sad")`
+
+
+---
+
+
+### Regressão Ridge
+
+A ideia é modificar o método de MQO para levar alguns dos $\hat{\beta}$ o mais próximo de zero que conseguirmos.
+
+--
+
+Para isto, em lugar de minimizarmos $$\displaystyle \sum_{i=1}^n (y_i - \underbrace{(b_0 + b_1 x_{1,i} + \cdots + b_p x_{p,i})}_{\hat{y}_i})^2,$$
+
+
+minimizamos
+
+$$\displaystyle \sum_{i=1}^n (y_i - b_0 - \sum_{j = 1}^p b_j x_{j,i})^2 + \underbrace{\lambda \sum_{j = 1}^p b_j^2}_{\text{shrinkage penalty}},$$ em que $\lambda > 0$ é chamado _Tunning paramater_ (e pode ser obtido através de [validação cruzada](https://ctruciosm.github.io/ISL/ISL_07)). Ou seja, para um dado $\lambda$, obtemos os $b$s que minimizam a função (que serão, então, os $\hat{\beta}s$).
+
+> Para cada escolha de $\lambda$, teremos $\hat{\beta}s$ diferentes.
+
+---
+
+
+### Regressão Lasso
+
+Regressão ridge, vai encolher os valores dos $\hat{\beta}s$ para zero, mas eles não serão exatamente zero. Com isso, todos as variáveis serão incluidas no modelo (e ainda será dificil interpretar o modelo).
+
+--
+
+Uma outra abordagem, que é capaz de fazer com que alguns $\hat{\beta}s$ sejam exatamente zero, é a **regressão lasso**.
+
+
+Agora, a função a minimizar é dada por
+
+$$\displaystyle \sum_{i=1}^n (y_i - b_0 - \sum_{j = 1}^p b_j x_{j,i})^2 + \underbrace{\lambda \sum_{j = 1}^p |b_j|}_{\text{shrinkage penalty}},$$ em que $\lambda > 0$ é chamado _Tunning paramater_ (e pode ser obtido através de [validação cruzada](https://ctruciosm.github.io/ISL/ISL_07)). Ou seja, para um dado $\lambda$, obtemos os $b$s que minimizam a função (que serão, então, os $\hat{\beta}s$).
+
+> A diferença da regressão ridge, a regressão lasso leva alguns dos $\hat{\beta}s$ para exatamente zero, reduzindo o número de variaveis no modelo.
+
+
+---
+
+### Ridge e Lasso
+
+Em ambos os métodos, para um $\lambda$ dado, basta resolver o problema de optimização e assim obter os $\hat{\beta}s$. Contudo, alguns cuidados precisam ser tomádos quando utilizarmos esses métodos:
+  - precisamos escolher o `melhor` $\lambda$;
+  - Ridge e Lasso, "encolhem" os valores de $\hat{\beta}_1, \ldots, \hat{\beta}_p$, mas não exercem nenhuma influência sobre $\hat{\beta}_0$;
+  - Quando trabalahamos com regressão ridge ou lasso, as variáveis numéricas devem estar padronizadas!;
+  - Como regressão lasso, levar alguns dos $\hat{\beta}s$ para zero, funciona como um seletor de variáveis (escolhe apenas um subconjunto de variáveis, aquelas com $\hat{\beta} \neq 0$);
+
+--
+
+.pull-left[
+
+#### Regressão por MQO
+
+1. Especificamos o modelo.
+2. Através da validação cruzada estimamos a performance do modelo fora da amostra.
+
+]
+
+--
+
+.pull-right[
+
+#### Ridge/Lasso
+
+0. Padronizamos as variáveis
+1. Especificamos o modelo
+2. Atraves de validação cruzada (apenas com dados de treinamento) escolhemos o melhor $\lambda$.
+3. Com o $\lambda$ definido e o modelo especificado, fazemos validação cruzada para estimar a performance do modelo fora da amostra.
+
+]
+
+
+  
+
+---
+class: inverse, right, middle
+# Hands-On
+---
+
+
+.panelset[
+.panel[.panel-name[Dados]
+```{r}
+library(dplyr)
+library(rsample)
+library(tidymodels)
+library(glmnet)  # Ridge
+library(ISLR)    # Dataset Hitters
+glimpse(Hitters)
+```
+]
+.panel[.panel-name[MQO]
+```{r}
+Hitters = na.omit(Hitters)
+set.seed(3210)
+folds <- vfold_cv(Hitters, v = 10)
+model_spec <- linear_reg() %>% set_engine("lm")
+model_wflw <- workflow() %>%
+  add_model(model_spec) %>%
+  add_formula(Salary ~ .)
+model_fit_rs <- model_wflw  %>% fit_resamples(folds)
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[Splits]
+```{r}
+# Dividimos train e test
+set.seed(1234)
+split_data <- initial_split(data = Hitters)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+# CV para escolher o melhor lambda
+folds_tung <- vfold_cv(train_data, v = 10)
+```
+]
+.panel[.panel-name[Ridge]
+```{r}
+model_spec <- linear_reg(mixture = 0, penalty = tune()) %>% # mixture = 0 para Ridge
+  set_mode("regression") %>% set_engine("glmnet")
+model_grid <- grid_regular(penalty(range = c(-2, 3)), levels = 50)
+model_reci <- recipe(Salary ~ ., data = train_data) %>%
+  step_novel(all_nominal_predictors()) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+model_wflw <- workflow() %>%
+  add_recipe(model_reci) %>% add_model(model_spec) 
+model_resp <- model_wflw %>% 
+  tune_grid(resamples = folds_tung, grid = model_grid)
+best_model <- model_resp %>% select_best("rmse")         # Escolhemos o "lambda" que produziu menor rmse
+final_wf <- model_wflw %>% finalize_workflow(best_model) # Definimos o modelo final
+model_fit_rs <- final_wf %>% fit_resamples(folds)        # Treinamos o modelo final
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[Gráfico Ridge]
+```{r}
+autoplot(model_resp)
+```
+]
+
+.panel[.panel-name[Lasso]
+```{r, fig.height=5, fig.width=15}
+model_spec <- linear_reg(mixture = 1, penalty = tune()) %>%  # misture = 1 para LASSO
+  set_mode("regression") %>% set_engine("glmnet")
+model_grid <- grid_regular(penalty(range = c(-2, 3)), levels = 50)
+model_reci <- recipe(Salary ~ ., data = train_data) %>%
+  step_novel(all_nominal_predictors()) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+model_wflw <- workflow() %>%
+  add_recipe(model_reci) %>% add_model(model_spec) 
+model_resp <- model_wflw %>% 
+  tune_grid(resamples = folds_tung, grid = model_grid)
+best_model <- model_resp %>% select_best("rmse")         # Escolhemos o "lambda" que produziu menor rmse
+final_wf <- model_wflw %>% finalize_workflow(best_model) # Definimos o modelo final
+model_fit_rs <- final_wf %>% fit_resamples(folds)        # Treinamos o modelo final
+collect_metrics(model_fit_rs)
+```
+]
+.panel[.panel-name[Lasso Gráfico]
+```{r fig.height=5, fig.width=15}
+autoplot(model_resp)
+```
+]
+]
+
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Regressão Ridge e Lasso começam a ser vantajosas quando $p$ é grande ( $p \approx n$ );
+- Para saber se o modelo é melhor que o clássico MQO, é necessário fazer validação-cruzada para avaliar a performance do modelo.
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 6
+
+
+
+]
+
+
+
