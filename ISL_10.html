@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-10-08" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"ec5ea25ecb0b4d67a357d107c6f8b7f8","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## Árvores de Decisão
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-10-08
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+# Motivação
+
+- Suponha que queremos um modelo preditivo para salários dos jogadores de futebol no Brazil ( `\(Y\)` ) em função de um conjunto de variáveis explicativas ( `\(X_1, X_2, \ldots, X_k\)` ).
+
+--
+
+- Uma alternativa seria fazer um modelo de regressão do tipo `$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_k X_k + u.$$`
+
+--
+
+- Mas, o que fazer se a relação entre `\(Y\)` e as `\(X\)`s não for linear?
+
+--
+
+- Podemos tentar aplicar transformações nas variáveis, mas... se isso não funcionar?
+
+--
+
+- Uma alternaiva é `segmentar` a variável target `\(Y\)` em várias regiões (em função de suas caracteristicas contidas nas `\(X\)`s). Assim, para fazer a predição de uma observação qualquer, pegamos a média do segmento onde se encontra.
+
+&gt; Veremos isto com um exemplo 👨‍🏫
+
+  
+---
+class: inverse, right, middle
+# Árvore de Decisão
+---
+
+## Árvore de Decisão
+
+
+
+---
+
+## Árvore de Decisão
+
+
+**A ideia por trás da árvore de decisão é a seguinte:**
+
+.blue[
+1. Dividir o espaço dos preditores ( `\(X_1,X_2, \ldots, X_k\)`) em J regiões diferentes não sobrepostas, `\(R_1, R_2, \ldots, R_J\)`.
+2. Para cada nova observação que cair na região `\(R_J\)` teremos a a mesma predição, que será igual à média da variável `\(Y\)` (nos dados de treinamento) na região `\(R_J\)`.
+]
+
+--
+
+**Mas como são construidas essas regiões `\(R_1, R_2, \ldots, R_J\)`?**
+
+--
+
+A princípio, podemos obter os `\(R_1, R_2, \ldots, R_J\)` de forma que minimizem `$$\displaystyle \sum_{j=1}^J \sum_{i \in R_j} (y_i - \bar{y}_{R_j})^2$$`
+
+--
+
+Infelizmente, testar todas as possíves escolhas para as regiões `\(R_1, R_2, \ldots, R_J\)` é impraticável 😢.
+
+--
+
+.red[Mas existem algumas alternativas para lidar com este problema. Veremos um exemplo no ilustrativo no **R** e depois veremos como funciona o algoritmo.]
+
+
+---
+
+## Árvore de Decisão: Exemplo simples
+
+
+```r
+# Carregamos os pacotes
+library(tidymodels)
+library(ISLR)
+library(rpart)
+library(rpart.plot)
+# Dividimos os dados em treinamento e teste
+set.seed(1234)
+Hitters &lt;- na.omit(Hitters) 
+split_data &lt;- initial_split(data = Hitters)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+# Aplicamos a árvore de decisão nos dados de treinamento.
+Hitters_tree &lt;- rpart(Salary ~ . , data = train_data)
+```
+
+
+--
+
+Escreva no R:
+1. `Hitters_tree`
+2. `prp(Hitters_tree, digits = 4, extra = 1)`
+
+
+--
+**Qual a diferença?**
+
+---
+
+## Árvore de Decisão:
+
+1. .red[Entre todas as `\(X_1, \cdots, X_k\)` e possíveis valores de `\(s\)`, buscamos a melhor `\(X_j\)` e o ponto de corte `\(s_1\)` tal que minimizem `$$\displaystyle \sum_{i: x_i \in R_1} (y_i - \bar{y}_{R_1})^2 +  \displaystyle \sum_{i: x_i \in R_2} (y_i - \bar{y}_{R_2})^2,$$` em que `\(R_1 = \{X | X_j  &gt; s_1\}\)` e `\(R_1 = \{X | X_j  \leq s_1\}.\)`]
+
+--
+
+2. .green[Usando um procedimento semelhante, buscamos o mehor `\(X_i\)` e ponto de corte `\(s_2\)` tal que a soma de quadrados dos resísuos seja minimizada. A diferença do passo anterior, dividimos alguma das regiões `\(R_1\)` ou `\(R_2\)` de forma que teremos agora 3 regiões diferentes `\(R_1, R_2, R_3\)`.]
+
+--
+
+3. .blue[Buscamos outra variavel `\(X_m\)` e ponto de corte `\(s_3\)` tal que a soma de quadrados dos resísuos seja minimizada. Assim como no passo anterior, dividimos alguma das regiões `\(R_1\)`, `\(R_2\)`, `\(R_3\)` de forma que teremos agora 4 regiões diferentes `\(R_1, R_2, R_3, R_4\)`.]
+
+--
+
+...
+
+O mesmo procedimento é feito várias vezes até atingir algum critério de parada. 
+
+
+---
+
+## Árvore de Decisão
+
+Uma vez que as regiões `\(R_1, R_2, \cdots, R_J\)` foram definidas utilizando os dados de treinamento, fazemos a predição com os dados de teste. Se a observação cair na `\(j\)`-ésima região, a predição será `\(\bar{y}_{R_j}\)`.
+
+
+--
+
+
+
+```r
+# Qual será o salário ds novos jogadores (test_data) segundo o modelo?
+yhat &lt;- predict(Hitters_tree, newdata = test_data)
+rmse_vec(as.numeric(yhat),test_data$Salary)
+```
+
+```
+## [1] 310.6233
+```
+
+Lembre-se `$$RMSE = \sqrt{\dfrac{\displaystyle \sum_{i \in Teste} (y_i - \hat{y}_i)^2}{\text{Num. obs. Teste}}}$$`
+
+---
+
+## Árvore de Decisão: 
+
+Dependendo do critério de parada escolhido, o modelo pode apresentar _overfitting_ (funcionar muito bem nos dados de treinamento mas muito pobre nos dados de teste). 
+
+--
+
+Para evitar _overfitting_ é feito uma _poda_ da árvore (*Pruning*), que consiste em `cortar` os galhos da árvore que podem ser muito específicos, forçando "muito a barra" na hora do ajuste.
+
+--
+
+Discutir isto em profundida está fora de uma apresentação introdutória do método. Por enquanto, nos conformaremos em saber que precisamos escolher appropriadamente os valores da profundidade da árvore (`tree_depth`) e da complexidade da poda (`cost_complexity`). Para escolher os melhores valores, faremos validação cruzada.
+
+---
+
+
+.panelset[
+.panel[.panel-name[Slipts]
+
+```r
+# Dividimos train e test
+set.seed(1234)
+split_data &lt;- initial_split(data = Hitters)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+```
+]
+.panel[.panel-name[Tuning]
+
+```r
+folds_tung &lt;- vfold_cv(train_data, v = 10)
+model_spec &lt;- decision_tree(tree_depth = tune(), cost_complexity = tune()) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("rpart")
+model_grid &lt;- grid_regular(cost_complexity(), tree_depth(), levels = 5)
+model_wflw &lt;- workflow() %&gt;%
+              add_model(model_spec) %&gt;%
+              add_formula(Salary ~ .)
+model_resamp &lt;- model_wflw %&gt;% 
+                tune_grid(resamples = folds_tung, grid = model_grid)
+best_model &lt;- model_resamp %&gt;% select_best("rmse") 
+best_model
+```
+
+```
+## # A tibble: 1 × 3
+##   cost_complexity tree_depth .config              
+##             &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt;                
+## 1        0.000562          4 Preprocessor1_Model09
+```
+]
+
+.panel[.panel-name[Performance]
+
+```r
+# Definimos o modelo definido
+final_wf &lt;- model_wflw %&gt;% finalize_workflow(best_model) 
+# Treinamos o modelo e avaliaremos com validação cruzada
+set.seed(3210)
+folds &lt;- vfold_cv(Hitters, v = 10)
+model_fit_rs &lt;- final_wf %&gt;% fit_resamples(folds) 
+# Vemos a performance estimada
+collect_metrics(model_fit_rs)
+```
+
+```
+## # A tibble: 2 × 6
+##   .metric .estimator    mean     n std_err .config             
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 rmse    standard   379.       10 22.2    Preprocessor1_Model1
+## 2 rsq     standard     0.399    10  0.0409 Preprocessor1_Model1
+```
+
+```r
+# Modelo final
+modelo_final &lt;- final_wf %&gt;% fit(data = Hitters)
+```
+]
+]
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Temos aprendido como funciona uma árvore de decisão para regressão. Contudo, se nosso objetivo é classificar (se `\(Y\)` for uma variável qualitativa), é possível também utilizar uma árvore de decisão, basta especificar `set_mode("classification")` no slide anterior e pronto. 
+- Para entender melhor como funcionam as árvores de decisão para fins de classificação, ver a Seção 8.1.2 do livro James et al. (2013).
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 8
+
+
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

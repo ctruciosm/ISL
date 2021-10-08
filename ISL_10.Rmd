@@ -1,0 +1,279 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "Árvores de Decisão"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+# Motivação
+
+- Suponha que queremos um modelo preditivo para salários dos jogadores de futebol no Brazil ( $Y$ ) em função de um conjunto de variáveis explicativas ( $X_1, X_2, \ldots, X_k$ ).
+
+--
+
+- Uma alternativa seria fazer um modelo de regressão do tipo $$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_k X_k + u.$$
+
+--
+
+- Mas, o que fazer se a relação entre $Y$ e as $X$s não for linear?
+
+--
+
+- Podemos tentar aplicar transformações nas variáveis, mas... se isso não funcionar?
+
+--
+
+- Uma alternaiva é `segmentar` a variável target $Y$ em várias regiões (em função de suas caracteristicas contidas nas $X$s). Assim, para fazer a predição de uma observação qualquer, pegamos a média do segmento onde se encontra.
+
+> Veremos isto com um exemplo `r emo::ji("teacher")`
+
+  
+---
+class: inverse, right, middle
+# Árvore de Decisão
+---
+
+## Árvore de Decisão
+
+
+
+---
+
+## Árvore de Decisão
+
+
+**A ideia por trás da árvore de decisão é a seguinte:**
+
+.blue[
+1. Dividir o espaço dos preditores ( $X_1,X_2, \ldots, X_k$) em J regiões diferentes não sobrepostas, $R_1, R_2, \ldots, R_J$.
+2. Para cada nova observação que cair na região $R_J$ teremos a a mesma predição, que será igual à média da variável $Y$ (nos dados de treinamento) na região $R_J$.
+]
+
+--
+
+**Mas como são construidas essas regiões $R_1, R_2, \ldots, R_J$?**
+
+--
+
+A princípio, podemos obter os $R_1, R_2, \ldots, R_J$ de forma que minimizem $$\displaystyle \sum_{j=1}^J \sum_{i \in R_j} (y_i - \bar{y}_{R_j})^2$$
+
+--
+
+Infelizmente, testar todas as possíves escolhas para as regiões $R_1, R_2, \ldots, R_J$ é impraticável `r emo::ji("sad")`.
+
+--
+
+.red[Mas existem algumas alternativas para lidar com este problema. Veremos um exemplo no ilustrativo no **R** e depois veremos como funciona o algoritmo.]
+
+
+---
+
+## Árvore de Decisão: Exemplo simples
+
+```{r}
+# Carregamos os pacotes
+library(tidymodels)
+library(ISLR)
+library(rpart)
+library(rpart.plot)
+# Dividimos os dados em treinamento e teste
+set.seed(1234)
+Hitters <- na.omit(Hitters) 
+split_data <- initial_split(data = Hitters)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+# Aplicamos a árvore de decisão nos dados de treinamento.
+Hitters_tree <- rpart(Salary ~ . , data = train_data)
+```
+
+
+--
+
+Escreva no R:
+1. `Hitters_tree`
+2. `prp(Hitters_tree, digits = 4, extra = 1)`
+
+
+--
+**Qual a diferença?**
+
+---
+
+## Árvore de Decisão:
+
+1. .red[Entre todas as $X_1, \cdots, X_k$ e possíveis valores de $s$, buscamos a melhor $X_j$ e o ponto de corte $s_1$ tal que minimizem $$\displaystyle \sum_{i: x_i \in R_1} (y_i - \bar{y}_{R_1})^2 +  \displaystyle \sum_{i: x_i \in R_2} (y_i - \bar{y}_{R_2})^2,$$ em que $R_1 = \{X | X_j  > s_1\}$ e $R_1 = \{X | X_j  \leq s_1\}.$]
+
+--
+
+2. .green[Usando um procedimento semelhante, buscamos o mehor $X_i$ e ponto de corte $s_2$ tal que a soma de quadrados dos resísuos seja minimizada. A diferença do passo anterior, dividimos alguma das regiões $R_1$ ou $R_2$ de forma que teremos agora 3 regiões diferentes $R_1, R_2, R_3$.]
+
+--
+
+3. .blue[Buscamos outra variavel $X_m$ e ponto de corte $s_3$ tal que a soma de quadrados dos resísuos seja minimizada. Assim como no passo anterior, dividimos alguma das regiões $R_1$, $R_2$, $R_3$ de forma que teremos agora 4 regiões diferentes $R_1, R_2, R_3, R_4$.]
+
+--
+
+...
+
+O mesmo procedimento é feito várias vezes até atingir algum critério de parada. 
+
+
+---
+
+## Árvore de Decisão
+
+Uma vez que as regiões $R_1, R_2, \cdots, R_J$ foram definidas utilizando os dados de treinamento, fazemos a predição com os dados de teste. Se a observação cair na $j$-ésima região, a predição será $\bar{y}_{R_j}$.
+
+
+--
+
+
+```{r}
+# Qual será o salário ds novos jogadores (test_data) segundo o modelo?
+yhat <- predict(Hitters_tree, newdata = test_data)
+rmse_vec(as.numeric(yhat),test_data$Salary)
+```
+
+Lembre-se $$RMSE = \sqrt{\dfrac{\displaystyle \sum_{i \in Teste} (y_i - \hat{y}_i)^2}{\text{Num. obs. Teste}}}$$
+
+---
+
+## Árvore de Decisão: 
+
+Dependendo do critério de parada escolhido, o modelo pode apresentar _overfitting_ (funcionar muito bem nos dados de treinamento mas muito pobre nos dados de teste). 
+
+--
+
+Para evitar _overfitting_ é feito uma _poda_ da árvore (*Pruning*), que consiste em `cortar` os galhos da árvore que podem ser muito específicos, forçando "muito a barra" na hora do ajuste.
+
+--
+
+Discutir isto em profundida está fora de uma apresentação introdutória do método. Por enquanto, nos conformaremos em saber que precisamos escolher appropriadamente os valores da profundidade da árvore (`tree_depth`) e da complexidade da poda (`cost_complexity`). Para escolher os melhores valores, faremos validação cruzada.
+
+---
+
+
+.panelset[
+.panel[.panel-name[Slipts]
+```{r}
+# Dividimos train e test
+set.seed(1234)
+split_data <- initial_split(data = Hitters)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+```
+]
+.panel[.panel-name[Tuning]
+```{r}
+folds_tung <- vfold_cv(train_data, v = 10)
+model_spec <- decision_tree(tree_depth = tune(), cost_complexity = tune()) %>%
+              set_mode("regression") %>% 
+              set_engine("rpart")
+model_grid <- grid_regular(cost_complexity(), tree_depth(), levels = 5)
+model_wflw <- workflow() %>%
+              add_model(model_spec) %>%
+              add_formula(Salary ~ .)
+model_resamp <- model_wflw %>% 
+                tune_grid(resamples = folds_tung, grid = model_grid)
+best_model <- model_resamp %>% select_best("rmse") 
+best_model
+```
+]
+
+.panel[.panel-name[Performance]
+```{r}
+# Definimos o modelo definido
+final_wf <- model_wflw %>% finalize_workflow(best_model) 
+# Treinamos o modelo e avaliaremos com validação cruzada
+set.seed(3210)
+folds <- vfold_cv(Hitters, v = 10)
+model_fit_rs <- final_wf %>% fit_resamples(folds) 
+# Vemos a performance estimada
+collect_metrics(model_fit_rs)
+# Modelo final
+modelo_final <- final_wf %>% fit(data = Hitters)
+```
+]
+]
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+![](https://octodex.github.com/images/minertocat.png)
+]
+
+
+.pull-right[
+
+- Temos aprendido como funciona uma árvore de decisão para regressão. Contudo, se nosso objetivo é classificar (se $Y$ for uma variável qualitativa), é possível também utilizar uma árvore de decisão, basta especificar `set_mode("classification")` no slide anterior e pronto. 
+- Para entender melhor como funcionam as árvores de decisão para fins de classificação, ver a Seção 8.1.2 do livro James et al. (2013).
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 8
+
+
+
+]
+
+
+
