@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-11-03" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xe4f60452c904b3c9fac6c4b0185b101","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## <em>Bagging</em>, <em>Random Forests</em> e <em>Boosting</em>
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-11-03
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+# Motivação
+
+[Na reunião anterior](https://ctruciosm.github.io/ISL/ISL_10#1) aprendimos como funcionam e para que servem as àrvores de decisão.
+
+--
+
+.pull-left[
+
+**Vantagens**
+
+- Fáceis de entender e explicar.
+- Refletem mais de perto o processo humano de tomana de decisão.
+- Como a decisão é feita pode ser vista graficamente, o que ajuda na interpretação mesmo para não expertos.
+
+]
+
+--
+
+.pull-right[
+
+**Desvantagens**
+
+- Infelizmente, árvores de decisão não tem a mesma capacidade preditiva do que outras técnicas de regressão e/ou classificação
+- Uma pequena mudança nos dados pode causar uma grande mudança na árvorore
+
+]
+
+--
+
+&gt; .blue[Felizmente, utilizando métodos baseados em árvores de decisão essas desvanatagens podem ser superadas e obtermos modelos uma boa capacidade preditiva!]
+
+--
+
+
+Hoje estudaremos três desses métodos:
+
+- Bagging,
+- Random Forests,
+- Boosting.
+
+
+  
+---
+class: inverse, right, middle
+# Bagging
+---
+
+## Bagging
+
+.center[
+**Bagging (Bootstrap Aggregating)** é um procedimento para reduzir a variância de um método de _machine learning_.
+]
+
+
+--
+
+No curso básico de estatística vimos que se `\(X \sim N(0, \sigma)\)` então `\(\bar{X} \sim N(0, \sigma / \sqrt{n})\)`. Assim, `\(\sigma^2/n\)` (variância de `\(\bar{X}\)`) para `\(n &gt; 1\)`, é sempre menor do que `\(\sigma^2\)` (variância de `\(X\)`).
+
+--
+
+Que melhor ideia do que usar uma _média_ para reduzir a variância, certo?
+
+--
+
+**Bagging** parte dessa mesma ideia: utilizar `\(B\)` conjuntos de treinamento e para cada um deles fazer a predição. Assim, teremos, por exemplo, `\(\hat{f}^1(x), \ldots, \hat{f}^B(x)\)`. Logo, basta fazer a média dessas predições para obter nossa predição final 🆒.
+
+--
+
+Infelizmente, apenas possuimos 1 conjunto de treinamento 😿.
+
+--
+
+Então, como funciona o Bagging?
+
+
+
+---
+
+## Bagging
+
+1. Pegar `\(B\)` amostras **com reposição** do conjunto de dados de treinamento (esse processo é chamado de Bootstrap).
+2. Para cada um desses conjunto de treinamento reamostrados ajustar o modelo e fazer a predição, digamos, `\(\hat{f}^{\ast 1}(x), \ldots, \hat{f}^{\ast B}(x)\)`
+3. Calcular a previsão final: `$$\hat{f}_{bag}(x) = \dfrac{1}{B} \displaystyle \sum_{b = 1}^B \hat{f}^{\ast b}(x)$$`
+--
+
+&gt; Bagging é extremadamente útil quando trabalhamos com àrvores de decisão. Assim, no passo 2, utilizaremos árvores de decisão (sem ser podadas, gerando assim modelos com pouco bies mas alta variância).
+
+--
+
+.blue[Calcular a média no passo 3 faz sentido em problemas de regressão (pois a variável `\(y\)` é quantitativa). Mas em problemas de classificação (onde `\(y\)` é qualitativa) calculr a média não é uma boa ideia, certo?. Nesse casos, em lugar de calcular a média utilizamos a moda.]
+
+---
+
+## Bagging: Exemplo
+
+.panelset[
+.panel[.panel-name[Pacotes e Slipt]
+
+```r
+# Carregamos os pacotes
+library(tidymodels)
+library(ISLR)
+library(rpart)
+library(randomForest) # precisa instalar
+library(xgboost)      # precisa instalar
+# Dividimos os dados em treinamento e teste
+set.seed(1234)
+Hitters &lt;- na.omit(Hitters) 
+split_data &lt;- initial_split(data = Hitters)
+train_data &lt;- training(split_data)
+test_data &lt;- testing(split_data)
+```
+]
+.panel[.panel-name[Àrvore e Decisão]
+
+```r
+model_spec &lt;- decision_tree() %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("rpart")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        311.
+```
+]
+.panel[.panel-name[Bagging]
+
+```r
+model_spec &lt;- rand_forest(mtry = .cols()) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("randomForest")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        282.
+```
+]
+]
+
+---
+class: inverse, right, middle
+# Random Forests
+---
+
+## Random Forests
+
+.center[
+**Random (aleatório) Forests (floresta)**: Por que usar uma árvore se  podemos usar uma floresta inteira?
+]
+
+--
+
+Assim como em _Bagging_, _Random Forests_  também pega `\(B\)` amostras **com reposição** do conjunto de dados de treinamento mas funciona um pouco diferente:
+
+1. Pegar `\(B\)` amostras **com reposição** do conjunto de dados de treinamento (esse processo é chamado de Bootstrap).
+2. Para cada um desses conjunto de treinamento reamostrados **selecionar aleatoriamente** `\(m\)` dos `\(p\)` preditores, ajustar a árvore de decisão e fazer a predição. Assim, teremos `\(\hat{f}^{\ast 1}(x), \ldots, \hat{f}^{\ast B}(x)\)`
+3. Calcular a previsão final: `$$\hat{f}_{bag}(x) = \dfrac{1}{B} \displaystyle \sum_{b = 1}^B \hat{f}^{\ast b}(x)$$`
+
+
+--
+
+Escolher apenas `\(m\)` dos `\(p\)` preditores tem uma grande vantagem:
+
+--
+
+Se tivermos um _forte preditor_ e ele não estiver nos `\(m\)` preditores em alguns dos casos, a árvore de decisão tentará extrair o máximo de informação das outras variáveis para construir o modelo. Além disso, evitará que todas as predições das árvores sejam fortemente correlacionadas.
+
+---
+
+## Random Forests: Exemplo
+
+.panelset[
+.panel[.panel-name[Àrvore e Decisão]
+
+```r
+model_spec &lt;- decision_tree() %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("rpart")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        311.
+```
+]
+.panel[.panel-name[Bagging]
+
+```r
+model_spec &lt;- rand_forest(mtry = .cols()) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("randomForest")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        286.
+```
+]
+.panel[.panel-name[Random Forests]
+
+```r
+model_spec &lt;- rand_forest(mtry = sqrt(.cols())) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("randomForest")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        276.
+```
+]
+]
+
+
+---
+class: inverse, right, middle
+# Boosting
+---
+
+## Boosting
+
+Diferentemente de _Bagging_, _Boosting_ não ajusta o modelo em dados  reamostrados do conjunto de treinamento. _Boosting_ ajusta o modelo em versões **modificadas** dos dados de treinamento.
+
+--
+
+Em cada etapa, ajustamos uma árvore de decisão utilizando como variável resposta não os dados originais, mas os residuais obtidos na árvore anterior.
+
+
+--
+
+
+.red[Este procedimento é bem menos intuitivo do que os outros e nos limitaremos a descrever como ele funciona mais do que entender por quê ele funciona]
+
+
+---
+
+## Boosting
+
+Seja `\(y\)` a variável dependente, `\(x\)` as variáveis independentes e `\(r\)` os resíduos (*i.e.*  `\(y - \hat{f}(x)\)`).
+
+1. Defina `\(\hat{f}(x) = 0\)` e `\(r_i = y_i\)` para todo `\(i\)` no conjunto de treinamento.
+2. Ajustar uma árvore de decisão com `\(d+1\)` nós ao conjunto de treinamento `\((X, r)\)` e denote por `\(\hat{f}^b(x)\)` o valor predito.
+3. Atualizar `\(\hat{f}\)`: `$$\hat{f}(x) = \hat{f}(x) + \lambda \hat{f}^b(x)$$`
+4. Atualizar os resíduos: `$$r_i = r_i - \lambda \hat{f}^b(x)$$`
+5. Repetir os passos 2--3 para `\(b = 1, \ldots, B\)` e calcular a prediçñao final como `$$\hat{x} = \displaystyle \sum_{b = 1}^B \lambda \hat{f}^b(x)$$`
+
+
+---
+
+## Boosting
+
+.panelset[
+.panel[.panel-name[Àrvore e Decisão]
+
+```r
+model_spec &lt;- decision_tree() %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("rpart")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        311.
+```
+]
+.panel[.panel-name[Bagging]
+
+```r
+model_spec &lt;- rand_forest(mtry = .cols()) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("randomForest")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        279.
+```
+]
+.panel[.panel-name[Random Forests]
+
+```r
+model_spec &lt;- rand_forest(mtry = sqrt(.cols())) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("randomForest")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        273.
+```
+]
+.panel[.panel-name[Boosting]
+
+```r
+model_spec &lt;- boost_tree(trees = 1000, tree_depth = 4) %&gt;%
+              set_mode("regression") %&gt;% 
+              set_engine("xgboost")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  rmse(truth = Salary, estimate = .pred)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard        280.
+```
+]
+]
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+&lt;img src="https://octodex.github.com/images/minertocat.png" width="70%" /&gt;
+]
+
+
+.pull-right[
+
+- Interpretar Bagging, Random Forests e Boosting não é trivial. Aprenda sobre **Variable Importance Measures** para um aprofundamento nesse assunto.
+- Aprenda como _tunar_ parametros utilizando o pacote `tidymodels`. Dica: visite a [documentação](https://www.tidymodels.org/find/parsnip/#models) ou faça `args(rand_forest)`/ `args(boost_tree)` para saber quais hiperparâmetros podem ser tunados.
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 8
+
+
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

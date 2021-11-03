@@ -1,0 +1,379 @@
+---
+title: "_Statistical Learning:_"
+subtitle: "_Bagging_, _Random Forests_ e _Boosting_"  
+author: 'Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>&nbsp; ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>&nbsp; carlos.trucios@facc.ufrj.br</a><br>'
+date: '`r Sys.Date()`'
+institute: "Grupo de Estudos CIA, </br>  -- Causal Inference and Analytics --"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+    includes:
+      in_header: header.html
+---
+layout: true
+
+<a class="footer-link" href="http://ctruciosm.github.io">ctruciosm.github.io &mdash; Carlos Trucíos (FACC/UFRJ)</a>
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width = 9, fig.height = 3.5, fig.retina = 3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+
+```{r xaringanExtra, echo=FALSE}
+xaringanExtra::use_xaringan_extra(c("tile_view", "tachyons", "scribble", "editable", "panelset", "webcam", "freezeframe", "clipboard"))
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = FALSE
+)
+xaringanExtra::use_logo(
+  image_url = "imagens/CIA_logo.png"
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_xaringan()
+```
+
+# Motivação
+
+[Na reunião anterior](https://ctruciosm.github.io/ISL/ISL_10#1) aprendimos como funcionam e para que servem as àrvores de decisão.
+
+--
+
+.pull-left[
+
+**Vantagens**
+
+- Fáceis de entender e explicar.
+- Refletem mais de perto o processo humano de tomana de decisão.
+- Como a decisão é feita pode ser vista graficamente, o que ajuda na interpretação mesmo para não expertos.
+
+]
+
+--
+
+.pull-right[
+
+**Desvantagens**
+
+- Infelizmente, árvores de decisão não tem a mesma capacidade preditiva do que outras técnicas de regressão e/ou classificação
+- Uma pequena mudança nos dados pode causar uma grande mudança na árvorore
+
+]
+
+--
+
+> .blue[Felizmente, utilizando métodos baseados em árvores de decisão essas desvanatagens podem ser superadas e obtermos modelos uma boa capacidade preditiva!]
+
+--
+
+
+Hoje estudaremos três desses métodos:
+
+- Bagging,
+- Random Forests,
+- Boosting.
+
+
+  
+---
+class: inverse, right, middle
+# Bagging
+---
+
+## Bagging
+
+.center[
+**Bagging (Bootstrap Aggregating)** é um procedimento para reduzir a variância de um método de _machine learning_.
+]
+
+
+--
+
+No curso básico de estatística vimos que se $X \sim N(0, \sigma)$ então $\bar{X} \sim N(0, \sigma / \sqrt{n})$. Assim, $\sigma^2/n$ (variância de $\bar{X}$) para $n > 1$, é sempre menor do que $\sigma^2$ (variância de $X$).
+
+--
+
+Que melhor ideia do que usar uma _média_ para reduzir a variância, certo?
+
+--
+
+**Bagging** parte dessa mesma ideia: utilizar $B$ conjuntos de treinamento e para cada um deles fazer a predição. Assim, teremos, por exemplo, $\hat{f}^1(x), \ldots, \hat{f}^B(x)$. Logo, basta fazer a média dessas predições para obter nossa predição final `r emo::ji("cool")`.
+
+--
+
+Infelizmente, apenas possuimos 1 conjunto de treinamento `r emo::ji("sad")`.
+
+--
+
+Então, como funciona o Bagging?
+
+
+
+---
+
+## Bagging
+
+1. Pegar $B$ amostras **com reposição** do conjunto de dados de treinamento (esse processo é chamado de Bootstrap).
+2. Para cada um desses conjunto de treinamento reamostrados ajustar o modelo e fazer a predição, digamos, $\hat{f}^{\ast 1}(x), \ldots, \hat{f}^{\ast B}(x)$
+3. Calcular a previsão final: $$\hat{f}_{bag}(x) = \dfrac{1}{B} \displaystyle \sum_{b = 1}^B \hat{f}^{\ast b}(x)$$
+--
+
+> Bagging é extremadamente útil quando trabalhamos com àrvores de decisão. Assim, no passo 2, utilizaremos árvores de decisão (sem ser podadas, gerando assim modelos com pouco bies mas alta variância).
+
+--
+
+.blue[Calcular a média no passo 3 faz sentido em problemas de regressão (pois a variável $y$ é quantitativa). Mas em problemas de classificação (onde $y$ é qualitativa) calculr a média não é uma boa ideia, certo?. Nesse casos, em lugar de calcular a média utilizamos a moda.]
+
+---
+
+## Bagging: Exemplo
+
+.panelset[
+.panel[.panel-name[Pacotes e Slipt]
+```{r}
+# Carregamos os pacotes
+library(tidymodels)
+library(ISLR)
+library(rpart)
+library(randomForest) # precisa instalar
+library(xgboost)      # precisa instalar
+# Dividimos os dados em treinamento e teste
+set.seed(1234)
+Hitters <- na.omit(Hitters) 
+split_data <- initial_split(data = Hitters)
+train_data <- training(split_data)
+test_data <- testing(split_data)
+```
+]
+.panel[.panel-name[Àrvore e Decisão]
+```{r}
+model_spec <- decision_tree() %>%
+              set_mode("regression") %>% 
+              set_engine("rpart")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Bagging]
+```{r}
+model_spec <- rand_forest(mtry = .cols()) %>%
+              set_mode("regression") %>% 
+              set_engine("randomForest")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+]
+
+---
+class: inverse, right, middle
+# Random Forests
+---
+
+## Random Forests
+
+.center[
+**Random (aleatório) Forests (floresta)**: Por que usar uma árvore se  podemos usar uma floresta inteira?
+]
+
+--
+
+Assim como em _Bagging_, _Random Forests_  também pega $B$ amostras **com reposição** do conjunto de dados de treinamento mas funciona um pouco diferente:
+
+1. Pegar $B$ amostras **com reposição** do conjunto de dados de treinamento (esse processo é chamado de Bootstrap).
+2. Para cada um desses conjunto de treinamento reamostrados **selecionar aleatoriamente** $m$ dos $p$ preditores, ajustar a árvore de decisão e fazer a predição. Assim, teremos $\hat{f}^{\ast 1}(x), \ldots, \hat{f}^{\ast B}(x)$
+3. Calcular a previsão final: $$\hat{f}_{bag}(x) = \dfrac{1}{B} \displaystyle \sum_{b = 1}^B \hat{f}^{\ast b}(x)$$
+
+
+--
+
+Escolher apenas $m$ dos $p$ preditores tem uma grande vantagem:
+
+--
+
+Se tivermos um _forte preditor_ e ele não estiver nos $m$ preditores em alguns dos casos, a árvore de decisão tentará extrair o máximo de informação das outras variáveis para construir o modelo. Além disso, evitará que todas as predições das árvores sejam fortemente correlacionadas.
+
+---
+
+## Random Forests: Exemplo
+
+.panelset[
+.panel[.panel-name[Àrvore e Decisão]
+```{r}
+model_spec <- decision_tree() %>%
+              set_mode("regression") %>% 
+              set_engine("rpart")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Bagging]
+```{r}
+model_spec <- rand_forest(mtry = .cols()) %>%
+              set_mode("regression") %>% 
+              set_engine("randomForest")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Random Forests]
+```{r}
+model_spec <- rand_forest(mtry = sqrt(.cols())) %>%
+              set_mode("regression") %>% 
+              set_engine("randomForest")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+]
+
+
+---
+class: inverse, right, middle
+# Boosting
+---
+
+## Boosting
+
+Diferentemente de _Bagging_, _Boosting_ não ajusta o modelo em dados  reamostrados do conjunto de treinamento. _Boosting_ ajusta o modelo em versões **modificadas** dos dados de treinamento.
+
+--
+
+Em cada etapa, ajustamos uma árvore de decisão utilizando como variável resposta não os dados originais, mas os residuais obtidos na árvore anterior.
+
+
+--
+
+
+.red[Este procedimento é bem menos intuitivo do que os outros e nos limitaremos a descrever como ele funciona mais do que entender por quê ele funciona]
+
+
+---
+
+## Boosting
+
+Seja $y$ a variável dependente, $x$ as variáveis independentes e $r$ os resíduos (*i.e.*  $y - \hat{f}(x)$).
+
+1. Defina $\hat{f}(x) = 0$ e $r_i = y_i$ para todo $i$ no conjunto de treinamento.
+2. Ajustar uma árvore de decisão com $d+1$ nós ao conjunto de treinamento $(X, r)$ e denote por $\hat{f}^b(x)$ o valor predito.
+3. Atualizar $\hat{f}$: $$\hat{f}(x) = \hat{f}(x) + \lambda \hat{f}^b(x)$$
+4. Atualizar os resíduos: $$r_i = r_i - \lambda \hat{f}^b(x)$$
+5. Repetir os passos 2--3 para $b = 1, \ldots, B$ e calcular a prediçñao final como $$\hat{x} = \displaystyle \sum_{b = 1}^B \lambda \hat{f}^b(x)$$
+
+
+---
+
+## Boosting
+
+.panelset[
+.panel[.panel-name[Àrvore e Decisão]
+```{r}
+model_spec <- decision_tree() %>%
+              set_mode("regression") %>% 
+              set_engine("rpart")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Bagging]
+```{r}
+model_spec <- rand_forest(mtry = .cols()) %>%
+              set_mode("regression") %>% 
+              set_engine("randomForest")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Random Forests]
+```{r}
+model_spec <- rand_forest(mtry = sqrt(.cols())) %>%
+              set_mode("regression") %>% 
+              set_engine("randomForest")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+.panel[.panel-name[Boosting]
+```{r}
+model_spec <- boost_tree(trees = 1000, tree_depth = 4) %>%
+              set_mode("regression") %>% 
+              set_engine("xgboost")
+model_fit <- model_spec %>% 
+             fit(Salary ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %>%
+  rmse(truth = Salary, estimate = .pred)
+```
+]
+]
+
+
+---
+
+
+# Data-Tips:
+
+
+.pull-left[ 
+```{r echo=FALSE, out.width = '70%'}
+knitr::include_graphics("https://octodex.github.com/images/minertocat.png")
+```
+]
+
+
+.pull-right[
+
+- Interpretar Bagging, Random Forests e Boosting não é trivial. Aprenda sobre **Variable Importance Measures** para um aprofundamento nesse assunto.
+- Aprenda como _tunar_ parametros utilizando o pacote `tidymodels`. Dica: visite a [documentação](https://www.tidymodels.org/find/parsnip/#models) ou faça `args(rand_forest)`/ `args(boost_tree)` para saber quais hiperparâmetros podem ser tunados.
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 8
+
+
+
+]
+
+
+
