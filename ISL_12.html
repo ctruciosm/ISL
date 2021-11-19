@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-11-19" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xd76827edb2e4e7083cf4ebf054ddd22","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## <em>Support Vector Machines</em> (SVM)
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-11-19
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+## Introdução
+
+- Desenvolvido pelo pessoal da computação (1990s)
+
+--
+
+- Funciona tanto se os grupos são linearmente separáveis ou não.
+
+--
+
+
+
+  
+---
+class: inverse, right, middle
+# SVM
+---
+
+### SVM: Definições básicas
+
+
+**Hiperplano:** em um espaço de dimensão `\(p\)`, um hiperplano é um subespaço de dimensão `\(p-1\)`. Em termos matemáticos, um hiperplano é definido por `$$\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_p X_p = 0$$`
+
+--
+
+
+
+
+
+.panelset[
+.panel[.panel-name[p = 2]
+
+`$$\underbrace{\beta_0}_{-0.7} + \underbrace{\beta_1}_{0.6} X_1 + \underbrace{\beta_2}_{-1} X_2= 0$$`
+&lt;img src="ISL_12_files/figure-html/unnamed-chunk-2-1.png" width="50%" /&gt;
+]
+.panel[.panel-name[p = 3]
+`$$\underbrace{\beta_0}_{0} + \underbrace{\beta_1}_{1} X_1 + \underbrace{\beta_2}_{1} X_2 + \underbrace{\beta_3}_{-1} X_3= 0$$`
+
+
+&lt;img src="imagens/hiperplano.png" width="25%" /&gt;
+
+]
+]
+
+
+---
+
+### SVM: Intuição
+
+.center[
+
+&lt;img src="imagens/hiperplano.png" width="35%" /&gt;
+
+]
+--
+
+E se utilizarmos o hiperplano para dividir as observações que caem acima/abaixo dele?
+
+--
+
+Essa é a ideia do SVM (porém, bem mais complexa pois não precisa que a separação seja linear).
+
+
+---
+
+### SVM: Intuição
+
+.center[
+&lt;img src="ISL_12_files/figure-html/unnamed-chunk-6-1.png" width="60%" /&gt;
+]
+
+--
+
+Como escolhemos o melhor hiperplano? (reta, no caso)
+
+--
+
+Um critério é maximizar a distância mínima do ponto ao hiperplano! 
+
+--
+
+.blue[Ou seja, queremos encontrar os] `\(\beta\)`s .blue[que nos levam a esse hiperplano que maximiza a distância mínima do ponto ao hiperplano.]
+
+
+---
+
+### SVM: Intuição
+
+.center[
+&lt;img src="ISL_12_files/figure-html/unnamed-chunk-7-1.png" width="60%" /&gt;
+]
+
+--
+
+Essas três pontos nas margens são chamados de _support vectors_ pois são vetores na dimensão `\(p\)` e porque suportam o hiperplano que maximiza a distância mínima do ponto ao hiperplano.
+
+
+--
+
+Infelizmente, esse hiperplano não sempre existe (ou mesmo que existe não sempre é desejável).
+
+--
+
+Mas podemos tentar achar outro tipo de hiperplanos. Por exemplo, podemos permitir que algumas observações  estejam do lado errado do hiperplano /  margens.
+
+
+---
+
+### SVM
+
+Muitas vezes, lidamos com casos em que um solução linearmente separável não é uma boa opção:
+
+
+.panelset[
+.panel[.panel-name[Caso 1]
+.center[
+&lt;img src="imagens/nonlinearcase1.png" width="35%" /&gt;
+]
+]
+.panel[.panel-name[Caso 2]
+.center[
+&lt;img src="imagens/nonlinearcase2.png" width="35%" /&gt;
+]
+]
+.panel[.panel-name[Caso 3]
+.center[
+&lt;img src="imagens/nonlinearcase3.png" width="35%" /&gt;
+]
+]
+]
+
+---
+
+## SVM
+
+
+**Possíveis soluções:**
+
+- Incluir termos polinomiais como variáveis explicativas: `\(X^2, X^3,...\)` (a mesma idea quando trabalhamos com regressão linear).
+
+--
+
+- Outra forma de lidar com essa não lineariedade é através de Kernels!!!!
+
+--
+
+- **Kernels** são funções que quantificam a similaridade de dois observações.
+
+--
+
+No caso linear, basicamente classificamos uma observação dependendo de ela cai acima/abaixo do hiperplano: `$$f(x) = \beta_0 + \underbrace{\beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_k x_k}_{x' \beta}$$`
+
+
+---
+class: inverse, right, middle
+# Implementação no R
+svm_poly e svm_rbf
+---
+
+## Implementação no R
+
+.panelset[
+
+.panel[.panel-name[Splitting data]
+
+
+```r
+library(tidymodels)
+library(mlbench)
+data(BreastCancer)
+BreastCancer &lt;- BreastCancer %&gt;% select(-Id) %&gt;% drop_na()
+set.seed(123) 
+data_split &lt;- initial_split(BreastCancer, prop = 3/4, strata = Class)
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)
+```
+]
+
+.panel[.panel-name[Reg. Logistica]
+
+```r
+model_spec &lt;- logistic_reg() %&gt;% 
+              set_mode("classification") %&gt;%
+              set_engine("glm")
+model_fit &lt;- model_spec %&gt;% 
+             fit(Class ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  accuracy(truth = Class, estimate = .pred_class)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.930
+```
+]
+.panel[.panel-name[SVM Linear]
+
+```r
+model_spec &lt;- svm_poly(degree = 1) %&gt;% 
+              set_mode("classification") %&gt;%
+              set_engine("kernlab", scaled = FALSE)
+model_fit &lt;- model_spec %&gt;% 
+             fit(Class ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  accuracy(truth = Class, estimate = .pred_class)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.971
+```
+]
+.panel[.panel-name[SVM Linear]
+
+```r
+model_spec &lt;- svm_poly(degree = 1) %&gt;% 
+              set_mode("classification") %&gt;%
+              set_engine("kernlab", scaled = FALSE)
+model_fit &lt;- model_spec %&gt;% set_args(cost = 10) %&gt;% 
+             fit(Class ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  accuracy(truth = Class, estimate = .pred_class)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.959
+```
+]
+
+.panel[.panel-name[SVM Poly 2]
+
+```r
+model_spec &lt;- svm_poly(degree = 2) %&gt;% 
+              set_mode("classification") %&gt;%
+              set_engine("kernlab", scaled = FALSE)
+model_fit &lt;- model_spec %&gt;% 
+             fit(Class ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  accuracy(truth = Class, estimate = .pred_class)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.971
+```
+]
+.panel[.panel-name[SVM RBF]
+
+```r
+model_spec &lt;- svm_rbf() %&gt;% 
+              set_mode("classification") %&gt;%
+              set_engine("kernlab", scaled = FALSE)
+model_fit &lt;- model_spec %&gt;% 
+             fit(Class ~ ., data = train_data)
+augment(model_fit, new_data = test_data) %&gt;%
+  accuracy(truth = Class, estimate = .pred_class)
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.965
+```
+]
+]
+
+
+
+---
+
+
+## Data-Tips:
+
+
+.pull-left[ 
+&lt;img src="https://octodex.github.com/images/minertocat.png" width="70%" /&gt;
+]
+
+
+.pull-right[
+
+- Temos utilizado apenas os valores padrão implementados no SVM.
+- Aprenda como _tunar_ parametros utilizando o pacote `tidymodels`. Dica: visite a [documentação](https://www.tidymodels.org/find/parsnip/#models) ou faça `args(rand_forest)`/ `args(boost_tree)` para saber quais hiperparâmetros podem ser tunados.
+
+
+**Happy Coding!**
+
+
+### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 9
+
+
+- [Chatzidimitriou, K., Diamantopoulos, T., Papamichail, M., and Symeonidis, A. (2018). Practical Machine Learning in R. Leanpub.](https://leanpub.com/practical-machine-learning-r) Chapter 6
+
+
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
