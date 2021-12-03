@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Statistical Learning:</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Prof. Carlos Trucíos   FACC/UFRJ       ctruciosm.github.io    carlos.trucios@facc.ufrj.br " />
+    <meta name="date" content="2021-12-03" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script type="application/json" id="xaringanExtra-editable-docid">{"id":"xede362fdebb489bbf56d4ab39fe26cb","expires":14}</script>
+    <script src="libs/himalaya/himalaya.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <link href="libs/editable/editable.css" rel="stylesheet" />
+    <script src="libs/editable/editable.js"></script>
+    <script src="libs/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="libs/fabric/fabric.min.js"></script>
+    <link href="libs/xaringanExtra-scribble/scribble.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-scribble/scribble.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function() { window.xeScribble = new Scribble({"pen_color":["#FF0000"],"pen_size":3,"eraser_size":30}) })</script>
+    <script src="libs/freezeframe/freezeframe.min.js"></script>
+    <script src="libs/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
+    <link href="libs/xaringanExtra-extra-styles/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# <em>Statistical Learning:</em>
+## <em>Principal Component Analysis</em> (PCA)
+### Prof. Carlos Trucíos <br> FACC/UFRJ <br><br> <a href="http://ctruciosm.github.io"> <i class="fa fa-desktop fa-fw"></i>  ctruciosm.github.io</a><br> <a href="mailto:carlos.trucios@facc.ufrj.br"><i class="fa fa-paper-plane fa-fw"></i>  carlos.trucios@facc.ufrj.br</a><br>
+### Grupo de Estudos CIA, </br> – Causal Inference and Analytics –
+### 2021-12-03
+
+---
+
+layout: true
+
+&lt;a class="footer-link" href="http://ctruciosm.github.io"&gt;ctruciosm.github.io &amp;mdash; Carlos Trucíos (FACC/UFRJ)&lt;/a&gt;
+
+---
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 110px;
+height: 128px;
+z-index: 0;
+background-image: url(imagens/CIA_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+## Introdução
+
+- Nas reuniões anteriores estudamos métodos de aprendizado de máquina **supervisionados**, ou seja, temos uma variável _target_ `\(Y\)` e um conjunto de variáveis explicativas `\(X\)`'s
+
+--
+
+- Existem também métodos **não supervisionadoss**, cujo foco é extrair relações do conjunto de variáveis `\(X\)`'s. 
+
+--
+
+- Nos métodos **não supervisionados**, não existe variável _target_ `\(Y\)`, apenas `\(X\)`'s.
+
+
+--
+
+
+- Estudaremos o método de **componentes principais**, cujo foco é resumir a informação contida nas `\(p\)` variáveis explicativas ( `\(X_1, \ldots, X_p\)`) em um conjuno de poucas novas variáveis (componentes) não correlacionadas que capturam a maior parte da variabilidade dos dados.
+
+
+  
+---
+class: inverse, right, middle
+# Análise de Componentes Principais
+---
+
+### Análise de Componentes Principais
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+The central idea of principal component analysis (PCA) is to reduce the dimensionality of a data set consisting of a large number of interrelated variables, while retaining as much as possible of the variation present in the date set. This is achieved by transforming to a new set of variables, the principal components (PCs), which are uncorrelated, and which are ordered so that the first few retain most of the variation present in all of the original variables.
+.tr[
+— Jolliffe (2012), Principal Component Analysis, 2nd edition.
+]]
+
+
+--
+
+- É uma técnica de redução de dimensão
+- Transforma um conjunto de variáveis (variáveis originais) em um novo conjunto de variáveis não correlacionadas (componentes)
+- As componentes são obtidas de forma que capturem a maior parte da variabilidade  total dos dados em apenas poucas componentes
+- O número total de componentes é igual ao número de variáveis originais (porém, já as primeiras componentes capturam a maioria da variabilidade dos dados).
+- Cada componente é uma combinação linear de todas as variáveis originais
+- Para que ACP tenha sentido é necessário que as variáveis originais sejam correlacionadas.
+
+
+---
+
+### Obtenção das componentes
+
+**Objetivo:** Encontrar `\(r\)` componentes ($r &lt; p$) de forma que obtenhamos a maior parte da informação dos dados.
+
+&lt;center&gt;
+
+
+&lt;img src="imagens/FiguraIntuicao.png" width="50%" /&gt;
+
+&lt;/center&gt;
+
+
+---
+
+### Obtenção das componentes
+
+Seja `\(X\)` uma matriz (centrada) com `\(N\)` colunas e `\(T\)` linhas.
+
+--
+
+Seja o i-ésimo elemento da primeira componente: `$$Z_{i1} = \phi_{11} X_{i1} + \phi_{12} X_{i2} + ... + \phi_{1N} X_{iN} \quad i = 1, ..., T.$$`
+
+--
+
+
+Estamos interessados em obter `\(\phi_1\)` de forma que `\(Var(Z_1)\)` seja máxima (sujeito a certas restrições).
+
+--
+
+Reescrevendo em forma matricial temos `$$Z_1 = X_{T \times N} \phi_{1,N \times 1}$$`
+
+--
+
+`$$Var(Z_1) = \frac{1}{T}Z_1'Z_1 = \dfrac{1}{T} \phi_1' X'X \phi_1 = \phi_1'\Sigma \phi_1$$` em que `\(\Sigma\)` é a matriz de covariância dos dados originais
+
+
+---
+
+### Obtenção das componentes
+
+Queremos maximizar `\(Var(Z_1)\)` sujeito a `\(\phi_1'\phi_1 = 1\)`. Então, `$$L = \phi_1'\Sigma \phi_1 - \lambda (\phi_1'\phi_1 -1)$$`
+
+--
+
+
+Derivando w.r.t `\(\phi_1\)` temos: `$$\dfrac{\partial L}{\partial \phi_1} = 2 \Sigma \phi_1 - 2 \lambda \phi_1$$`
+
+
+--
+
+
+Igualando a zero: `$$\Sigma \phi_1 = \lambda \phi_1.$$`
+
+
+--
+
+
+&gt; Ou seja,  `\(\phi_1\)` é o autovetor associado ao autovalor `\(\lambda\)`.
+
+
+--
+
+Para que `$$Var(Z_1) = \phi_1'\Sigma \phi_1 = \phi_1' \lambda \phi_1 = \lambda \phi_1'\phi_1 = \lambda$$` seja máxima, `\(\lambda\)` deve ser o maior autovalor. Logo, `\(\phi_1\)` é o autovetor associado ao maior autovalor.
+
+
+---
+
+### Obtenção das componentes
+
+
+Nas componentes restante, estamos interessados em obter `$$Z_j = X \phi_j$$` em que `\(\phi_j\)` é escolhido para maximizar `\(Var(Z_j)\)` dado que `\(\phi_j'\phi_j = 1\)` e `\(\phi_j'\phi_k = 0 \quad \forall k\neq j\)`.
+
+--
+
+Seguindo um procedimento semelhante ao anterior temos que `$$\Sigma u_j = \lambda_j u_j$$` Logo, o vetor `\(\phi_j\)` que maximiza `\(Var(Z_j) = \lambda_j\)` é o autovetor associado ao j-ésimo maior autovalor. 
+
+
+---
+
+### Obtenção das componentes
+
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+Obter as componentes principais resume-se a um problema de calcular autovalores-autovetores da matriz de covariância.
+]
+
+--
+
+**Pseudo Algoritmo:**
+
+
+- Estimar a matriz de covariância `\(\widehat{\Sigma}\)` 
+- Decompor `\(\widehat{\Sigma}\)` em autovalores e autovetores `$$\widehat{\Sigma} M = M \Lambda$$`em que `\(\Lambda\)` é uma matriz diagonal de autovalores ordenados de maior a menor e `\(M\)` a matriz de autovetores assoaciados aos autovalores
+- Calcular as componentes proncipais através de `\(Z = X\times M\)`
+
+
+
+---
+class: inverse, right, middle
+# ACP no R
+---
+
+
+### ACP no R
+
+Embora implementar ACP desde zero não é uma tarefa dificil, existem pacotes que faciliam nossa vida.
+
+
+--
+
+O _dataset_ `USArrests` do pacote `ISLR` traz informações de 4 variáveis referentes a crimes no Estados Unidos.
+
+```r
+library(ISLR)
+library(dplyr)
+glimpse(USArrests)
+```
+
+```
+## Rows: 50
+## Columns: 4
+## $ Murder   &lt;dbl&gt; 13.2, 10.0, 8.1, 8.8, 9.0, 7.9, 3.3, 5.9, 15.4, 17.4, 5.3, 2.…
+## $ Assault  &lt;int&gt; 236, 263, 294, 190, 276, 204, 110, 238, 335, 211, 46, 120, 24…
+## $ UrbanPop &lt;int&gt; 58, 48, 80, 50, 91, 78, 77, 72, 80, 60, 83, 54, 83, 65, 57, 6…
+## $ Rape     &lt;dbl&gt; 21.2, 44.5, 31.0, 19.5, 40.6, 38.7, 11.1, 15.8, 31.9, 25.8, 2…
+```
+
+```r
+cp &lt;- princomp(USArrests, cor = TRUE)
+```
+
+--
+
+O objeto `cp` contém várias informações (faça `str(cp)` pra verificar). Se quisermos unicamente as novas variáveis, faça `cp$scores`
+
+
+---
+### ACP no R
+
+
+
+```r
+cp$scores
+```
+
+```
+##                     Comp.1      Comp.2      Comp.3       Comp.4
+## Alabama         0.98556588  1.13339238  0.44426879  0.156267145
+## Alaska          1.95013775  1.07321326 -2.04000333 -0.438583440
+## Arizona         1.76316354 -0.74595678 -0.05478082 -0.834652924
+## Arkansas       -0.14142029  1.11979678 -0.11457369 -0.182810896
+## California      2.52398013 -1.54293399 -0.59855680 -0.341996478
+## Colorado        1.51456286 -0.98755509 -1.09500699  0.001464887
+## Connecticut    -1.35864746 -1.08892789  0.64325757 -0.118469414
+## Delaware        0.04770931 -0.32535892  0.71863294 -0.881977637
+## Florida         3.01304227  0.03922851  0.57682949 -0.096284752
+## Georgia         1.63928304  1.27894240  0.34246008  1.076796812
+## Hawaii         -0.91265715 -1.57046001 -0.05078189  0.902806864
+## Idaho          -1.63979985  0.21097292 -0.25980134 -0.499104101
+## Illinois        1.37891072 -0.68184119  0.67749564 -0.122021292
+## Indiana        -0.50546136 -0.15156254 -0.22805484  0.424665700
+## Iowa           -2.25364607 -0.10405407 -0.16456432  0.017555916
+## Kansas         -0.79688112 -0.27016470 -0.02555331  0.206496428
+## Kentucky       -0.75085907  0.95844029  0.02836942  0.670556671
+## Louisiana       1.56481798  0.87105466  0.78348036  0.454728038
+## Maine          -2.39682949  0.37639158  0.06568239 -0.330459817
+## Maryland        1.76336939  0.42765519  0.15725013 -0.559069521
+## Massachusetts  -0.48616629 -1.47449650  0.60949748 -0.179598963
+## Michigan        2.10844115 -0.15539682 -0.38486858  0.102372019
+## Minnesota      -1.69268181 -0.63226125 -0.15307043  0.067316885
+## Mississippi     0.99649446  2.39379599  0.74080840  0.215508013
+## Missouri        0.69678733 -0.26335479 -0.37744383  0.225824461
+## Montana        -1.18545191  0.53687437 -0.24688932  0.123742227
+## Nebraska       -1.26563654 -0.19395373 -0.17557391  0.015892888
+## Nevada          2.87439454 -0.77560020 -1.16338049  0.314515476
+## New Hampshire  -2.38391541 -0.01808229 -0.03685539 -0.033137338
+## New Jersey      0.18156611 -1.44950571  0.76445355  0.243382700
+## New Mexico      1.98002375  0.14284878 -0.18369218 -0.339533597
+## New York        1.68257738 -0.82318414  0.64307509 -0.013484369
+## North Carolina  1.12337861  2.22800338  0.86357179 -0.954381667
+## North Dakota   -2.99222562  0.59911882 -0.30127728 -0.253987327
+## Ohio           -0.22596542 -0.74223824  0.03113912  0.473915911
+## Oklahoma       -0.31178286 -0.28785421  0.01530979  0.010332321
+## Oregon          0.05912208 -0.54141145 -0.93983298 -0.237780688
+## Pennsylvania   -0.88841582 -0.57110035  0.40062871  0.359061124
+## Rhode Island   -0.86377206 -1.49197842  1.36994570 -0.613569430
+## South Carolina  1.32072380  1.93340466  0.30053779 -0.131466685
+## South Dakota   -1.98777484  0.82334324 -0.38929333 -0.109571764
+## Tennessee       0.99974168  0.86025130 -0.18808295  0.652864291
+## Texas           1.35513821 -0.41248082  0.49206886  0.643195491
+## Utah           -0.55056526 -1.47150461 -0.29372804 -0.082314047
+## Vermont        -2.80141174  1.40228806 -0.84126309 -0.144889914
+## Virginia       -0.09633491  0.19973529 -0.01171254  0.211370813
+## Washington     -0.21690338 -0.97012418 -0.62487094 -0.220847793
+## West Virginia  -2.10858541  1.42484670 -0.10477467  0.131908831
+## Wisconsin      -2.07971417 -0.61126862  0.13886500  0.184103743
+## Wyoming        -0.62942666  0.32101297  0.24065923 -0.166651801
+```
+
+
+---
+### Número de Componentes
+
+
+-  **Critério de Kaisser:** Utilizamos tantas componentes quanto autovalores satisfazendo maiores do que 1 `\(\lambda_i &gt; 1\)`.
+
+
+
+```r
+plot(cp)
+abline(h = 1, col = "red")
+```
+
+&lt;center&gt;
+
+
+&lt;img src="ISL_13_files/figure-html/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+&lt;/center&gt;
+
+
+---
+### Número de Componentes
+
+- **Até atingir um mínimo de variância explicada pela componentes**
+
+
+```r
+summary(cp)
+```
+
+```
+## Importance of components:
+##                           Comp.1    Comp.2    Comp.3     Comp.4
+## Standard deviation     1.5748783 0.9948694 0.5971291 0.41644938
+## Proportion of Variance 0.6200604 0.2474413 0.0891408 0.04335752
+## Cumulative Proportion  0.6200604 0.8675017 0.9566425 1.00000000
+```
+
+---
+
+### Comentários
+
+1. Para evitar que o efeito escala da variável influencia na ACP, é preferível utilizar `cor = TRUE`. Utilizar `cor = TRUE` é equivalente a primeiro padronizar cada uma das variáveis para ter variância 1.
+2. Se estamos interessados em interpretar as componentes, basta olhar para a correlação entre as variáveis e as componentes.
+3. As componentes obtidas são não correlacionadas 
+
+```r
+cor(cp$scores)
+```
+
+```
+##               Comp.1        Comp.2        Comp.3        Comp.4
+## Comp.1  1.000000e+00 -8.107436e-16 -3.548369e-16  4.659948e-16
+## Comp.2 -8.107436e-16  1.000000e+00  2.123073e-16 -2.988266e-16
+## Comp.3 -3.548369e-16  2.123073e-16  1.000000e+00 -8.843824e-17
+## Comp.4  4.659948e-16 -2.988266e-16 -8.843824e-17  1.000000e+00
+```
+
+
+
+---
+
+
+
+
+## Data-Tips:
+
+
+.pull-left[ 
+&lt;img src="https://octodex.github.com/images/minertocat.png" width="70%" /&gt;
+]
+
+
+.pull-right[
+
+ACP pode ser utilizado para criar indicadores, reducir o número de variáveis a serem utilizadas em um método supervisionado ou com fins de visualização de dados.
+
+
+#### Referências
+
+- [James, G., Witten, D., Hastie, T., and Tibshirani, R. (2013). An Introduction to Statistical Learning with Applications in R. New York: Springer.](https://www.statlearning.com) Chapter 10
+
+
+
+
+
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
